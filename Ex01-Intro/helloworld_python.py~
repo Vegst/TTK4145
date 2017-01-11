@@ -5,7 +5,7 @@ from threading import Thread
 
 i = 0
 
-def thread1():
+def someThreadFunction():
     print("Hello from a thread!")
 
 # Potentially useful thing:
@@ -15,7 +15,7 @@ def thread1():
 
 
 def main():
-    someThread = Thread(target = thread1, args = (),)
+    someThread = Thread(target = someThreadFunction, args = (),)
     someThread.start()
     
     someThread.join()
