@@ -15,7 +15,13 @@ Reduce waiting, improve throughput, resource utizliation, average reponse time
 Harder
 
 5.
-Processes - 
-Threads - 
-Green Threads - 
-Coroutines - 
+Processes - Executing instance of an application. OS-managed, own address space
+Threads - OS-managed, same address space as parent and all its other threads.
+Green Threads - thread that is not OS-managed
+Coroutines - Like thread, but not OS-managed and not concurrent (no co-operatively multitasking)
+
+6.
+Thread
+
+7.
+GIL - mutex that prevents multiple native threads from executing Python bytecodes at once
