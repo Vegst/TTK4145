@@ -1,5 +1,5 @@
 C: 
-gcc -std=c99 -pthread helloworld_c.c -o helloworld
+gcc -sted=c99 -pthread helloworld_c.c -o helloworld
 ./helloworld
 
 Python:

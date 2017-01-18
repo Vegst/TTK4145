@@ -12,7 +12,7 @@ Increase of parallelism / faster computation.
 Reduce waiting, improve throughput, resource utizliation, average reponse time
 
 4.
-Harder for interaction between concurent parts, and easier for independent parts
+Harder
 
 5.
 Processes - Executing instance of an application. OS-managed, own address space
@@ -21,7 +21,7 @@ Green Threads - thread that is not OS-managed
 Coroutines - Like thread, but not OS-managed and not concurrent (no co-operatively multitasking)
 
 6.
-Thread (GO: co-routine)
+Thread
 
 7.
 GIL - mutex that prevents multiple native threads from executing Python bytecodes at once
