@@ -16,8 +16,6 @@ def thread2():
 	i -= 1
 
 
-
-
 def main():
     someThread1 = Thread(target = thread1, args = (),)
     someThread2 = Thread(target = thread2, args = (),)
