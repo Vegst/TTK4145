@@ -14,11 +14,15 @@ A network may consist of multiple sub-network and therefore multiple masters. Al
 
 ## Modularization
 
+![alt text](modules.png)
+
 ### Orders
+
+All orders are only manipulated by the network thread, and only read by the local elevator thread.
 
 * Global -- All orders in the network. All nodes should have identity global orders. The master handles synchronization of these orders.
 
-* Local -- Orders the local node are assigned to do by the master
+* Local -- Orders that the local node are assigned to do by the master
 
 ## Error handling
 
