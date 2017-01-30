@@ -49,7 +49,7 @@ The primary function of the I/O module is to keep track of which buttons are pre
 
 ## Order preservation
 
-
+To perserve all orders, all orders in the system are stored in each module in a global and a local queue.
 
 * Global -- All orders in the network. All nodes should have identical global orders. The master handles synchronization of these orders.
 
