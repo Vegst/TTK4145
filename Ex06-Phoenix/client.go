@@ -3,16 +3,14 @@ package main
 import (
 	"fmt"
 	"time"
-	"./broadcaster/udp"
+	"./peers"
 )
 
-/*
 func main() {
 
 	// Make threads
-	sendCh := make(chan string)
 	receiveCh := make(chan string)
-	go broadcaster.Broadcaster(sendCh, receiveCh)
+	go peers.Receiver(20009, receiveCh)
 
 	// Main loop
 	for {
@@ -23,18 +21,5 @@ func main() {
 				time.Sleep(time.Second/10)
 
 		}
-	}
-}
-*/
-
-func main() {
-
-	conn := udp.Init(20009)
-
-	for {
-		msg := udp.Receive(conn)
-		fmt.Println(msg)
-		time.Sleep(time.Second/10)
-
 	}
 }

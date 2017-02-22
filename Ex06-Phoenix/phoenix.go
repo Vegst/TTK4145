@@ -1,26 +1,40 @@
 package main
 
 import (
+	"strconv"
 	"fmt"
 	"time"
-	"./broadcaster"
+	"./peers"
 	"./timer"
+	"./counter"
+	"os/exec"
 )
+
+func spawnBackup() {
+
+	cmd := exec.Command("gnome-terminal", "-x", "go", "run", "/home/vegst/elevator-lab-gr32/Ex06-Phoenix/phoenix.go")
+	cmd.Start()
+}
 
 func main() {
 	master := false
 	i := 0
-	inactiveTime := time.Second * 0
 
 	// Make threads
 	sendCh := make(chan string)
 	receiveCh := make(chan string)
-	go broadcaster.Broadcaster(sendCh, receiveCh)
+	go peers.Peer(20009, sendCh, receiveCh)
 
 	timeoutCh := make(chan bool)
 	go timer.Timer(time.Second, timeoutCh)
 
+	resetCh := make(chan bool)
+	incrementCh := make(chan time.Duration)
+	triggerCh := make(chan bool)
+	go counter.Counter(time.Second/2, resetCh, incrementCh, triggerCh)
+
 	// Main loop
+	fmt.Println("Now slave!")
 	for {
 		select {
 			case <- timeoutCh:
@@ -30,42 +44,23 @@ func main() {
 				}
 			case msg := <-receiveCh:
 				if !master {
-					inactiveTime = 0
+					resetCh <- true
+					i,_ = strconv.Atoi(msg)
 				}
-				fmt.Println(msg)
+			case <- triggerCh:
+				master = true
+				spawnBackup()
+				fmt.Println("Now master!")
+				
 			default:
 				if master {
-					sendCh <- "test"
+					sendCh <- strconv.Itoa(i)
 				}
 				time.Sleep(time.Second/10)
 				if !master {
-					inactiveTime += time.Second/10
-					if (inactiveTime < time.Second/2) {
-						master = true
-						inactiveTime = 0
-						fmt.Println("Now master!")
-					}
+					incrementCh <- time.Second/10
 				}
 
 		}
-	}
-	/*
-	if master {
-		i := 0
-		for {
-			i++
-			fmt.Println(i)
-			for c := 1; c <= 10; c++ {
-				//udp.Broadcast(conn, "test")
-				time.Sleep(time.Second/10)
-			}
-		}
-	} else {
-		for {
-			fmt.Println("test")
-			time.Sleep(time.Second)
-		}
-	}
-	*/
-	
+	}	
 }
