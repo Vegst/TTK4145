@@ -17,7 +17,18 @@ type Light struct{
 	button elev_button_type_t
 }
 
-func OrderHandler_handle_orders()
+func OrderHandler_handle_orders(){
+	orderChannel := make(chan Order, 1)
+	go OrderHandler_get_orders(orderChannel)
+	select{
+		case newOrder := <-orderChannel:
+			fmt.Println("NEW ORDER!")
+			fmt.Println("----------")
+			fmt.Println("Floor: ", newOrder.floor)
+			fmt.Println("Button: ")
+	}
+
+}
 
 func OrderHandler_get_orders(orderInternal chan Order){
 	time.Sleep(10*time.Millisecond)
@@ -35,7 +46,6 @@ func OrderHandler_get_orders(orderInternal chan Order){
 					fmt.Println("Floor: ", newOrder.floor)
 					fmt.Println("Button: ", newOrder.button)
 					orderInternal <- newOrder
-					
 				}
 			}
 			if(f > 0){
