@@ -1,6 +1,5 @@
-// +build !windows
+package conn // +build !windows
 
-package conn
 
 import (
 	"net"
