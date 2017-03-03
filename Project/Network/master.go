@@ -1,7 +1,7 @@
 package main
 
 import (
-	"./Network/server"
+	".../server"
 	//"./Network/localip"
 	"fmt"
 	"time"
@@ -18,16 +18,6 @@ func main() {
 
 	var id string
 	id = "test";
-	/*
-	if id == "" {
-		localIP, err := localip.LocalIP()
-		if err != nil {
-			fmt.Println(err)
-			localIP = "DISCONNECTED"
-		}
-		id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
-	}
-	*/
 
 	go server.Server(20013, id, enableCh, sendCh, receiveCh, eventCh)
 
@@ -39,7 +29,7 @@ func main() {
 		case message := <-receiveCh:
 			fmt.Println("Received: ", message)
 		case event := <-eventCh:
-			fmt.Println("Event: ", event.Type)
+			fmt.Println("Event: ", server.ToString(event))
 		default:
 			//sendCh <- "hei"
 			time.Sleep(50*time.Millisecond)
