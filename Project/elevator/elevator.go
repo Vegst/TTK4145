@@ -1,4 +1,5 @@
 package elevator
+
 /*
 #cgo CFLAGS: -std=gnu11
 #cgo LDFLAGS: -lcomedi -lm
@@ -7,7 +8,6 @@ package elevator
 import (
 	"C"
 )
-
 
 type MotorDirection int
 
@@ -28,15 +28,14 @@ const (
 type Type int
 
 const (
-	TypeComedi 		Type = 0
-	TypeSimulation 	Type = 1
+	TypeComedi     Type = 0
+	TypeSimulation Type = 1
 )
 
 const (
 	NumFloors  = int(C.N_FLOORS)
 	NumButtons = int(C.N_BUTTONS)
 )
-
 
 func b2i(b bool) int {
 	if b {
@@ -85,11 +84,7 @@ func GetObstructionSignal() bool {
 	return int(C.elev_get_obstruction_signal()) != 0
 }
 
-
-
-
-
-/*** RIP <3 ***/
+/*** RIP </3 ***/
 
 /*
 const (
@@ -165,15 +160,15 @@ func Elev_init(e Elev_type) int {
             con_val("com_ip",   ip,   "%s")
             con_val("com_port", port, "%s")
         )
-        
+
         pthread_mutex_init(&sockmtx, NULL);
-    
+
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
         assert(sockfd != -1 && "Unable to set up socket");
 
         struct addrinfo hints = {
-            .ai_family      = AF_UNSPEC, 
-            .ai_socktype    = SOCK_STREAM, 
+            .ai_family      = AF_UNSPEC,
+            .ai_socktype    = SOCK_STREAM,
             .ai_protocol    = IPPROTO_TCP,
         };
         struct addrinfo* res;
