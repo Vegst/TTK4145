@@ -21,17 +21,17 @@ const (
 )
 
 type LightEvent struct {
-	LightType 	LightType
-	Floor     	int
-	Value		bool
+	LightType LightType
+	Floor     int
+	Value     bool
 }
 
 func EventManager(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, stopCh chan bool, motorStateCh chan MotorDirection, floorCh chan int) {
-	
+
 	Init(TypeSimulation)
 
 	// Storage of last states to detect change of state
-	var lastButtonState [NumFloors][NumButtons] bool
+	var lastButtonState [NumFloors][NumButtons]bool
 	for f := 0; f < NumFloors; f++ {
 		for b := 0; b < NumButtons; b++ {
 			lastButtonState[f][b] = GetButtonSignal(ButtonType(b), f)
@@ -40,7 +40,6 @@ func EventManager(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, 
 
 	lastStopState := GetStopSignal()
 	lastFloorState := GetFloorSignal()
-
 
 	var buttonState bool
 	var stopState bool
@@ -65,7 +64,7 @@ func EventManager(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, 
 			case LIGHT_TYPE_DOOR:
 				SetDoorOpenLamp(l.Value)
 			}
-		case <-time.After(10*time.Millisecond):
+		case <-time.After(10 * time.Millisecond):
 			stopState = GetStopSignal()
 			if stopState != lastStopState {
 				lastStopState = stopState
