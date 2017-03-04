@@ -1,32 +1,39 @@
 package main
 
 import (
-	"./driver"
+	"./elevator"
 	"time"
+	"fmt"
 )
 
 func main() {
 
-	bCh := make(chan driver.ButtonEvent)
-	lCh := make(chan driver.LightEvent)
-	sCh := make(chan bool)
-	msCh := make(chan driver.Elev_motor_direction_t)
-	fCh := make(chan int)
+	fmt.Println("Start")
 
-	msCh <- driver.DIRN_UP
+	buttonEventCh := make(chan elevator.ButtonEvent)
+	lightEventCh := make(chan elevator.LightEvent)
+	stopCh := make(chan bool)
+	motorStateCh := make(chan elevator.MotorDirection)
+	floorCh := make(chan int)
 
-	go driver.Elevator_event_manager(bCh, lCh, sCh, msCh, fCh)
+
+	go elevator.EventManager(buttonEventCh, lightEventCh, stopCh, motorStateCh, floorCh)
+
+	motorStateCh <- elevator.DirnUp
 
 	for {
 		select {
-		case fi := <-fCh:
-			if fi == driver.N_FLOORS-1 {
-				msCh <- driver.DIRN_DOWN
-			} else if fi == 0 {
-				msCh <- driver.DIRN_UP
+		case <- buttonEventCh:
+		case <- lightEventCh:
+		case <- stopCh:
+		case <- motorStateCh:
+		case floor := <-floorCh:
+			if floor == elevator.NumFloors-1 {
+				motorStateCh <- elevator.DirnDown
+			} else if floor == 0 {
+				motorStateCh <- elevator.DirnUp
 			}
-		default:
-			time.Sleep(10 * time.Millisecond)
+		case <-time.After(10*time.Millisecond):
 		}
 	}
 }
