@@ -8,19 +8,6 @@ import(
 const NumOrderTypes = 3
 const NumFloors = 4
 
-type OrderType int
-
-const (
-	OrderCallUp      OrderType = 0
-	OrderCallDown    OrderType = 1
-	OrderCallCommand OrderType = 2
-)
-
-type OrderEvent struct{
-	Floor int
-	Type OrderType
-	Flag bool
-}
 
 type State struct{
 	Floor int
