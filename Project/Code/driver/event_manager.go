@@ -1,4 +1,4 @@
-package elevator
+package driver
 
 import (
 	"time"
@@ -7,6 +7,7 @@ import (
 type ButtonEvent struct {
 	Floor  int
 	Button ButtonType
+	State bool
 }
 
 type LightType int
@@ -15,9 +16,7 @@ const (
 	LIGHT_TYPE_UP      = 0
 	LIGHT_TYPE_DOWN    = 1
 	LIGHT_TYPE_COMMAND = 2
-	LIGHT_TYPE_FLOOR   = 3
 	LIGHT_TYPE_STOP    = 4
-	LIGHT_TYPE_DOOR    = 5
 )
 
 type LightEvent struct {
@@ -26,7 +25,7 @@ type LightEvent struct {
 	Value     bool
 }
 
-func EventManager(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, stopCh chan bool, motorStateCh chan MotorDirection, floorCh chan int) {
+func EventManager(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, stopCh chan bool, motorStateCh chan MotorDirection, floorCh chan int, doorOpenCh chan bool, floorIndicatorCh chan int) {
 
 	Init(TypeSimulation)
 
@@ -57,13 +56,13 @@ func EventManager(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, 
 				SetButtonLamp(ButtonCallDown, l.Floor, l.Value)
 			case LIGHT_TYPE_COMMAND:
 				SetButtonLamp(ButtonCallCommand, l.Floor, l.Value)
-			case LIGHT_TYPE_FLOOR:
-				SetFloorIndicator(l.Floor)
 			case LIGHT_TYPE_STOP:
 				SetStopLamp(l.Value)
-			case LIGHT_TYPE_DOOR:
-				SetDoorOpenLamp(l.Value)
 			}
+		case doorOpen := <-doorOpenCh:
+			SetDoorOpenLamp(doorOpen)
+		case floorIndicator := <-floorIndicatorCh:
+			SetFloorIndicator(floorIndicator)
 		case <-time.After(10 * time.Millisecond):
 			stopState = GetStopSignal()
 			if stopState != lastStopState {
@@ -88,7 +87,7 @@ func EventManager(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, 
 					buttonState = GetButtonSignal(ButtonType(b), f)
 					if buttonState != lastButtonState[f][b] {
 						lastButtonState[f][b] = buttonState
-						buttonEventCh <- ButtonEvent{f, ButtonType(b)}
+						buttonEventCh <- ButtonEvent{f, ButtonType(b), buttonState}
 					}
 				}
 			}

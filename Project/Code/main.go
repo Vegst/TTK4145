@@ -3,13 +3,13 @@ package main
 import (
 	"fmt"
 	"time"
-	"./logic"
+	"./elevator"
 )
 
 func main() {
 
 	fmt.Println("Start")
-	go logic.StateMachine()
+	go elevator.StateMachine()
 	for {
 		select {
 		case <-time.After(10*time.Millisecond):

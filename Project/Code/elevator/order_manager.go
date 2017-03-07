@@ -1,4 +1,4 @@
-package logic
+package elevator
 
 import (
 	"time"
@@ -12,7 +12,7 @@ type OrderEvent struct{
 
 
 
-func OrderManager(orderEventCh <-chan OrderEvent, stateCh <-chan State, localOrdersCh chan [NumFloors][NumTypes] bool, globalOrdersCh chan [NumFloors][NumTypes] bool) {
+func OrderManager(orderEventCh <-chan OrderEvent, stateCh <-chan Elevator, localOrdersCh chan [NumFloors][NumTypes] bool, globalOrdersCh chan [NumFloors][NumTypes] bool) {
 	var orders [NumFloors][NumTypes] bool
 	for {
 		select {

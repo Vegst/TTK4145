@@ -1,13 +1,14 @@
-package logic
+package elevator
 
 import (
-	"./elevator"
+	"../driver"
 )
 
+type Orders [NumFloors][NumTypes] bool
 
 const (
-	NumFloors = elevator.NumFloors
-	NumTypes  = elevator.NumButtons
+	NumFloors = driver.NumFloors
+	NumTypes  = driver.NumButtons
 )
 
 type OrderType int
