@@ -4,24 +4,23 @@ import (
 	"time"
 )
 
-type OrderEvent struct{
+type OrderEvent struct {
 	Floor int
-	Type OrderType
-	Flag bool
+	Type  OrderType
+	Flag  bool
 }
 
-
-
-func OrderManager(orderEventCh <-chan OrderEvent, stateCh <-chan Elevator, localOrdersCh chan [NumFloors][NumTypes] bool, globalOrdersCh chan [NumFloors][NumTypes] bool) {
-	var orders [NumFloors][NumTypes] bool
+func OrderManager(orderEventCh <-chan OrderEvent, stateCh <-chan Elevator, localOrdersCh chan [NumFloors][NumTypes]bool, globalOrdersCh chan [NumFloors][NumTypes]bool, e Elevator) {
+	var orders [NumFloors][NumTypes]bool
 	for {
 		select {
-		case orderEvent := <- orderEventCh:
+		case orderEvent := <-orderEventCh:
+			CalculateCost(orderEvent, e)
 			orders[orderEvent.Floor][orderEvent.Type] = orderEvent.Flag
 			localOrdersCh <- orders
 			globalOrdersCh <- orders
-		case <- stateCh:
-		case <-time.After(50*time.Millisecond):
+		case <-stateCh:
+		case <-time.After(50 * time.Millisecond):
 		}
 	}
 }

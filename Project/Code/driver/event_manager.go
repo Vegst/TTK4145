@@ -7,7 +7,7 @@ import (
 type ButtonEvent struct {
 	Floor  int
 	Button ButtonType
-	State bool
+	State  bool
 }
 
 type LightType int
@@ -27,7 +27,7 @@ type LightEvent struct {
 
 func EventManager(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, stopCh chan bool, motorStateCh chan MotorDirection, floorCh chan int, doorOpenCh chan bool, floorIndicatorCh chan int) {
 
-	Init(TypeSimulation)
+	Init(TypeComedi)
 
 	// Storage of last states to detect change of state
 	var lastButtonState [NumFloors][NumButtons]bool
