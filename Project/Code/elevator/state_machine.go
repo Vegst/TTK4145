@@ -3,136 +3,91 @@ package elevator
 import(
 	"time"
 	"./timer"
+	. "../def"
 	//"fmt"
-	"../driver"
 )
 
-type Behaviour int
-const (
-	BehaviourIdle = 0
-	BehaviourMoving = 1
-	BehaviourDoorOpen = 2
-)
 
-type Elevator struct {
-	Floor int
-	Direction driver.MotorDirection
-	Behaviour Behaviour
-	Orders Orders
-}
+func StateMachine(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, stopCh chan bool, motorStateCh chan MotorDirection, floorCh chan int, doorOpenCh chan bool, floorIndicatorCh chan int, orderEventCh chan OrderEvent, stateCh chan Elevator, localOrdersCh chan Orders, globalOrdersCh chan Orders) {
 
-
-/* States:
-	* Idle
-	* Moving
-	* DoorOpen
-   Events:
-	* Button
-	* Stop
-	* Floor
-	* Local Orders
-	* Global Orders
- */
-
-func StateMachine() {
-	
-	// Init channels
-	buttonEventCh := make(chan driver.ButtonEvent, 10)
-	lightEventCh := make(chan driver.LightEvent, 10)
-	stopCh := make(chan bool, 10)
-	motorStateCh := make(chan driver.MotorDirection, 10)
-	floorCh := make(chan int, 10)
-	doorOpenCh := make(chan bool, 10)
-	floorIndicatorCh := make(chan int, 10)
-
-	orderEventCh := make(chan OrderEvent, 10)
-	stateCh := make(chan Elevator, 10)
-	localOrdersCh := make(chan [NumFloors][NumTypes] bool, 10)
-	globalOrdersCh := make(chan [NumFloors][NumTypes] bool, 10)
 
 	timerResetCh := make(chan time.Duration)
 	timerTimeoutCh := make(chan bool)
-
 	go timer.Timer(timerResetCh, timerTimeoutCh)
-	go OrderManager(orderEventCh, stateCh, localOrdersCh, globalOrdersCh)
-	go driver.EventManager(buttonEventCh, lightEventCh, stopCh, motorStateCh, floorCh, doorOpenCh, floorIndicatorCh)
 	
 
 
 	var elev Elevator
 
 	// Initial state change
-	motorStateCh <- driver.DirnUp
-	elev.Direction = driver.DirnUp
-	elev.Behaviour = BehaviourMoving
+	motorStateCh <- DirnUp
+	elev.Direction = DirnUp
+	elev.Behaviour = ElevatorBehaviourMoving
 
 	for {
 		select {
+		// Event: Button pressed
 		case buttonEvent := <-buttonEventCh:
 			if (buttonEvent.State) {
 				orderEventCh <- OrderEvent{buttonEvent.Floor, OrderType(buttonEvent.Button), true}
 			}
+		// Event: Stop command
 		case <- stopCh:
-
+		// Event: Floor reached
 		case elev.Floor = <-floorCh:
 			if elev.Floor >= 0 && elev.Floor < NumFloors {
 				floorIndicatorCh <- elev.Floor
 				
 				switch(elev.Behaviour) {
-				case BehaviourMoving:
+				case ElevatorBehaviourMoving:
 					if(ShouldStop(elev.Orders, elev)){
 						if OrderAtFloor(elev.Orders, elev.Floor) {
 							// Clear orders at current floor
-							if elev.Direction == driver.DirnUp {
+							if elev.Direction == DirnUp {
 								orderEventCh <- OrderEvent{elev.Floor, OrderCallUp, false}
-							} else if elev.Direction == driver.DirnDown {
+							} else if elev.Direction == DirnDown {
 								orderEventCh <- OrderEvent{elev.Floor, OrderCallDown, false}
 							}
 							orderEventCh <- OrderEvent{elev.Floor, OrderCallCommand, false}
 
 							doorOpenCh <- true
 							timerResetCh <- time.Second * 3
-							motorStateCh <- driver.DirnStop
+							motorStateCh <- DirnStop
 
-							elev.Behaviour = BehaviourDoorOpen
-							elev.Direction = driver.DirnStop
+							elev.Behaviour = ElevatorBehaviourDoorOpen
 						} else {
-							motorStateCh <- driver.DirnStop
-							elev.Behaviour = BehaviourIdle
-							elev.Direction = driver.DirnStop
+							motorStateCh <- DirnStop
+							elev.Behaviour = ElevatorBehaviourIdle
+							elev.Direction = DirnStop
 						}
-						
-
 					}
 				}
-				
-				
 			}
 			
 		case elev.Orders = <- localOrdersCh:
 			switch(elev.Behaviour) {
-			case BehaviourDoorOpen:
+			case ElevatorBehaviourDoorOpen:
 				if OrderAtFloor(elev.Orders, elev.Floor) {
 					orderEventCh <- OrderEvent{elev.Floor, OrderCallUp, false}
 					orderEventCh <- OrderEvent{elev.Floor, OrderCallDown, false}
 					orderEventCh <- OrderEvent{elev.Floor, OrderCallCommand, false}
 					timerResetCh <- time.Second * 3
 				}
-			case BehaviourIdle:
+			case ElevatorBehaviourIdle:
 				if OrderAtFloor(elev.Orders, elev.Floor) {
 					orderEventCh <- OrderEvent{elev.Floor, OrderCallUp, false}
 					orderEventCh <- OrderEvent{elev.Floor, OrderCallDown, false}
 					orderEventCh <- OrderEvent{elev.Floor, OrderCallCommand, false}
 					timerResetCh <- time.Second * 3		
 					doorOpenCh <- true
-					elev.Behaviour = BehaviourDoorOpen
+					elev.Behaviour = ElevatorBehaviourDoorOpen
 
 				} else {
 					elev.Direction = GetDirection(elev.Orders, elev)
-					if elev.Direction == driver.DirnStop {
-						elev.Behaviour = BehaviourIdle
+					if elev.Direction == DirnStop {
+						elev.Behaviour = ElevatorBehaviourIdle
 					} else {
-						elev.Behaviour = BehaviourMoving
+						elev.Behaviour = ElevatorBehaviourMoving
 					}
 					motorStateCh <- elev.Direction
 				}
@@ -140,17 +95,17 @@ func StateMachine() {
 		case globalOrders := <- globalOrdersCh:
 			for f := 0; f < NumFloors; f++ {
 				for b := 0; b < NumTypes; b++ {
-					lightEventCh <- driver.LightEvent{driver.LightType(b), f, globalOrders[f][b]}
+					lightEventCh <- LightEvent{LightType(b), f, globalOrders[f][b]}
 				}
 			}
 		case <-timerTimeoutCh:
 			switch(elev.Behaviour) {
-			case BehaviourDoorOpen:
+			case ElevatorBehaviourDoorOpen:
 				elev.Direction = GetDirection(elev.Orders, elev)
-				if elev.Direction == driver.DirnStop {
-					elev.Behaviour = BehaviourIdle
+				if elev.Direction == DirnStop {
+					elev.Behaviour = ElevatorBehaviourIdle
 				} else {
-					elev.Behaviour = BehaviourMoving
+					elev.Behaviour = ElevatorBehaviourMoving
 				}
 				motorStateCh <- elev.Direction
 				doorOpenCh <- false

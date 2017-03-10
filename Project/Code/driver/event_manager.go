@@ -2,38 +2,17 @@ package driver
 
 import (
 	"time"
+	"../def"
 )
 
-type ButtonEvent struct {
-	Floor  int
-	Button ButtonType
-	State bool
-}
+func EventManager(buttonEventCh chan def.ButtonEvent, lightEventCh chan def.LightEvent, stopCh chan bool, motorStateCh chan def.MotorDirection, floorCh chan int, doorOpenCh chan bool, floorIndicatorCh chan int) {
 
-type LightType int
-
-const (
-	LIGHT_TYPE_UP      = 0
-	LIGHT_TYPE_DOWN    = 1
-	LIGHT_TYPE_COMMAND = 2
-	LIGHT_TYPE_STOP    = 4
-)
-
-type LightEvent struct {
-	LightType LightType
-	Floor     int
-	Value     bool
-}
-
-func EventManager(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, stopCh chan bool, motorStateCh chan MotorDirection, floorCh chan int, doorOpenCh chan bool, floorIndicatorCh chan int) {
-
-	Init(TypeSimulation)
 
 	// Storage of last states to detect change of state
 	var lastButtonState [NumFloors][NumButtons]bool
 	for f := 0; f < NumFloors; f++ {
 		for b := 0; b < NumButtons; b++ {
-			lastButtonState[f][b] = GetButtonSignal(ButtonType(b), f)
+			lastButtonState[f][b] = GetButtonSignal(def.ButtonType(b), f)
 		}
 	}
 
@@ -47,16 +26,16 @@ func EventManager(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, 
 	for {
 		select {
 		case ms := <-motorStateCh:
-			SetMotorDirection(MotorDirection(ms))
+			SetMotorDirection(def.MotorDirection(ms))
 		case l := <-lightEventCh:
 			switch l.LightType {
-			case LIGHT_TYPE_UP:
-				SetButtonLamp(ButtonCallUp, l.Floor, l.Value)
-			case LIGHT_TYPE_DOWN:
-				SetButtonLamp(ButtonCallDown, l.Floor, l.Value)
-			case LIGHT_TYPE_COMMAND:
-				SetButtonLamp(ButtonCallCommand, l.Floor, l.Value)
-			case LIGHT_TYPE_STOP:
+			case def.LightTypeUp:
+				SetButtonLamp(def.ButtonCallUp, l.Floor, l.Value)
+			case def.LightTypeDown:
+				SetButtonLamp(def.ButtonCallDown, l.Floor, l.Value)
+			case def.LightTypeCommand:
+				SetButtonLamp(def.ButtonCallCommand, l.Floor, l.Value)
+			case def.LightTypeStop:
 				SetStopLamp(l.Value)
 			}
 		case doorOpen := <-doorOpenCh:
@@ -78,16 +57,16 @@ func EventManager(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, 
 
 			for f := 0; f < NumFloors; f++ {
 				for b := 0; b < NumButtons; b++ {
-					if ButtonType(b) == ButtonCallUp && f == NumFloors-1 {
+					if def.ButtonType(b) == def.ButtonCallUp && f == NumFloors-1 {
 						continue
 					}
-					if ButtonType(b) == ButtonCallDown && f == 0 {
+					if def.ButtonType(b) == def.ButtonCallDown && f == 0 {
 						continue
 					}
-					buttonState = GetButtonSignal(ButtonType(b), f)
+					buttonState = GetButtonSignal(def.ButtonType(b), f)
 					if buttonState != lastButtonState[f][b] {
 						lastButtonState[f][b] = buttonState
-						buttonEventCh <- ButtonEvent{f, ButtonType(b), buttonState}
+						buttonEventCh <- def.ButtonEvent{f, def.ButtonType(b), buttonState}
 					}
 				}
 			}
