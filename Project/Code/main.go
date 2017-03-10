@@ -36,7 +36,7 @@ func main() {
 
 	for {
 		select {
-		case <-time.After(10*time.Millisecond):
+		case <-time.After(10 * time.Millisecond):
 		}
 	}
 }

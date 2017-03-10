@@ -1,7 +1,6 @@
 package elevator
 
-import(
-	"time"
+import (
 	"./timer"
 	. "../def"
 	//"fmt"
@@ -16,9 +15,6 @@ func StateMachine(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, 
 	go timer.Timer(timerResetCh, timerTimeoutCh)
 	
 
-
-	var elev Elevator
-
 	// Initial state change
 	motorStateCh <- DirnUp
 	elev.Direction = DirnUp
@@ -28,7 +24,7 @@ func StateMachine(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, 
 		select {
 		// Event: Button pressed
 		case buttonEvent := <-buttonEventCh:
-			if (buttonEvent.State) {
+			if buttonEvent.State {
 				orderEventCh <- OrderEvent{buttonEvent.Floor, OrderType(buttonEvent.Button), true}
 			}
 		// Event: Stop command
@@ -78,7 +74,7 @@ func StateMachine(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, 
 					orderEventCh <- OrderEvent{elev.Floor, OrderCallUp, false}
 					orderEventCh <- OrderEvent{elev.Floor, OrderCallDown, false}
 					orderEventCh <- OrderEvent{elev.Floor, OrderCallCommand, false}
-					timerResetCh <- time.Second * 3		
+					timerResetCh <- time.Second * 3
 					doorOpenCh <- true
 					elev.Behaviour = ElevatorBehaviourDoorOpen
 
@@ -92,7 +88,7 @@ func StateMachine(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, 
 					motorStateCh <- elev.Direction
 				}
 			}
-		case globalOrders := <- globalOrdersCh:
+		case globalOrders := <-globalOrdersCh:
 			for f := 0; f < NumFloors; f++ {
 				for b := 0; b < NumTypes; b++ {
 					lightEventCh <- LightEvent{LightType(b), f, globalOrders[f][b]}
@@ -111,8 +107,7 @@ func StateMachine(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, 
 				doorOpenCh <- false
 			}
 
-		case <- time.After(10*time.Millisecond):
+		case <-time.After(10 * time.Millisecond):
 		}
 	}
 }
-
