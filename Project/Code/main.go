@@ -4,11 +4,13 @@ import (
 	. "./def"
 	"./driver"
 	"./elevator"
-	"./network"
-	"./orders"
 	"./gui"
+	"./network"
+	"./network/bcast"
+	//"./network/conn"
 	"./network/localip"
-	. "./def"
+	"./network/peers"
+	"./orders"
 	"flag"
 	"fmt"
 	"os"
@@ -35,7 +37,6 @@ func main() {
 		simulator = "simulator1.con"
 	}
 
-
 	// Initialize system
 	driver.Init(driver.TypeSimulation, simulator)
 
@@ -52,32 +53,38 @@ func main() {
 
 	// StateMachine <--> OrderManager
 	orderEventCh := make(chan OrderEvent, 10)
-	stateCh := make(chan Elevator, 10)
+	stateCh := make(chan ElevatorState, 10)
 	localOrdersCh := make(chan Orders, 10)
 	globalOrdersCh := make(chan Orders, 10)
 
-	// OrderManager <--> StateMachine
+	// OrderManager <--> Network
+	netOrderCh := make(chan NetOrder, 10)
+	assignedOrderCh := make(chan OrderEvent, 10)
 
+	txNetOrderCh := make(chan NetOrder, 10)
+	rxNetOrderCh := make(chan NetOrder, 10)
+	txStateCh := make(chan ElevatorState, 10)
+	rxStateCh := make(chan ElevatorState, 10)
+
+	updateElevatorCh := make(chan Elevator, 10)
 	peerUpdateCh := make(chan peers.PeerUpdate)
 	peerTxEnable := make(chan bool)
-
-	helloTx := make(chan HelloMsg)
-	helloRx := make(chan HelloMsg)
 
 	go peers.Transmitter(15647, id, peerTxEnable)
 	go peers.Receiver(15647, peerUpdateCh)
 
-	go bcast.Transmitter(16569, helloTx)
-	go bcast.Receiver(16569, helloRx)
+	go bcast.Transmitter(16569, txNetOrderCh)
+	go bcast.Receiver(16569, rxNetOrderCh)
 
-	go network.Network(helloTx, helloRx, peerTxEnable, peerUpdateCh, localOrdersCh, orderEventCh)
+	go network.Network(id, txStateCh, txNetOrderCh, rxStateCh, rxNetOrderCh, peerTxEnable, peerUpdateCh, stateCh, updateElevatorCh, netOrderCh, assignedOrderCh)
 
 	// OrderManager <--> GUI
+	elevatorCh := make(chan Elevator, 10)
 	elevatorsCh := make(chan Elevators, 10)
 
 	go elevator.StateMachine(buttonEventCh, lightEventCh, stopCh, motorStateCh, floorCh, doorOpenCh, floorIndicatorCh, orderEventCh, stateCh, localOrdersCh, globalOrdersCh)
 	go driver.EventManager(buttonEventCh, lightEventCh, stopCh, motorStateCh, floorCh, doorOpenCh, floorIndicatorCh)
-	go orders.OrderManager(id, orderEventCh, stateCh, localOrdersCh, globalOrdersCh, elevatorsCh)
+	go orders.OrderManager(id, orderEventCh, assignedOrderCh, stateCh, updateElevatorCh, localOrdersCh, globalOrdersCh, elevatorCh, elevatorsCh, netOrderCh)
 	go gui.ElevatorVisualizer(elevatorsCh)
 
 	for {

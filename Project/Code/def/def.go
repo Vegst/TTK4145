@@ -30,9 +30,9 @@ type OrderEvent struct {
 	Flag  bool
 }
 
-type AssignedOrder struct {
+type NetOrder struct {
 	OrderEvent OrderEvent
-	id         string
+	ID         string
 }
 
 type Orders [NumFloors][NumTypes]bool
@@ -64,18 +64,14 @@ const (
 type Elevators map[string]Elevator
 
 type Elevator struct {
-	State ElevatorState
+	State  ElevatorState
 	Orders Orders
+	ID     string
 }
 type ElevatorState struct {
-	Floor int
+	Floor     int
 	Direction MotorDirection
 	Behaviour ElevatorBehaviour
-}
-
-type ElevatorState struct {
-	Elevator Elevator
-	id       string
 }
 
 // Driver

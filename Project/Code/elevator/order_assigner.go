@@ -8,7 +8,7 @@ import (
 
 func CalculateCost(o OrderEvent, e Elevator) float64 {
 	cost := float64(0)
-	cost += math.Abs(float64((o.Floor - e.Floor) * 10))
+	cost += math.Abs(float64((o.Floor - e.State.Floor) * 10))
 
 	//Adds cost for each f
 	for i := 0; i < NumFloors; i++ {
@@ -20,8 +20,8 @@ func CalculateCost(o OrderEvent, e Elevator) float64 {
 		}
 	}
 
-	if o.Floor < e.Floor && e.Direction == DirnUp ||
-		o.Floor > e.Floor && e.Direction == DirnDown {
+	if o.Floor < e.State.Floor && e.State.Direction == DirnUp ||
+		o.Floor > e.State.Floor && e.State.Direction == DirnDown {
 		cost += 20
 	}
 	fmt.Println("Cost of new order for Elevator: ", cost)
@@ -29,15 +29,15 @@ func CalculateCost(o OrderEvent, e Elevator) float64 {
 
 }
 
-func OrderAssigner(o OrderEvent, elevs [NumElevators]Elevator) int {
-	e := -1
+func OrderAssigner(o OrderEvent, elevs Elevators) string {
+	var id string = ""
 	eCost := math.Inf(1)
-	for i := 0; i < NumElevators; i++ {
-		iCost := float64(CalculateCost(o, elevs[i]))
+	for k := range elevs {
+		iCost := float64(CalculateCost(o, elevs[k]))
 		if iCost < eCost {
-			e = i
+			id = k
 			eCost = iCost
 		}
 	}
-	return e
+	return id
 }

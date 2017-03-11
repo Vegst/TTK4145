@@ -15,11 +15,11 @@ func clearTerminal() {
 }
 
 func print(elevators Elevators) {
-	for id,elevator := range elevators {
+	for id, elevator := range elevators {
 		fmt.Println("ELEVATOR", id)
 		for f, orders := range elevator.Orders {
-			if f == elevator.Floor {
-				switch(elevator.Direction) {
+			if f == elevator.State.Floor {
+				switch elevator.State.Direction {
 				case DirnUp:
 					fmt.Print("/\\")
 				case DirnDown:
@@ -27,7 +27,7 @@ func print(elevators Elevators) {
 				case DirnStop:
 					fmt.Print("X")
 				}
-				switch(elevator.Behaviour) {
+				switch elevator.State.Behaviour {
 				case ElevatorBehaviourIdle:
 					fmt.Print("I")
 				case ElevatorBehaviourMoving:
@@ -36,14 +36,14 @@ func print(elevators Elevators) {
 					fmt.Print("DO")
 				}
 			}
-		    for _, order := range orders {
-		        if order {
+			for _, order := range orders {
+				if order {
 					fmt.Print("	*")
 				} else {
 					fmt.Print("	-")
 				}
-		    }
-		    fmt.Println()
+			}
+			fmt.Println()
 		}
 	}
 	fmt.Println()
