@@ -7,7 +7,8 @@ import (
 	//"fmt"
 )
 
-func StateMachine(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, stopCh chan bool, motorStateCh chan MotorDirection, floorCh chan int, doorOpenCh chan bool, floorIndicatorCh chan int, orderEventCh chan OrderEvent, stateCh chan Elevator, localOrdersCh chan Orders, globalOrdersCh chan Orders) {
+
+func StateMachine(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, stopCh chan bool, motorStateCh chan MotorDirection, floorCh chan int, doorOpenCh chan bool, floorIndicatorCh chan int, orderEventCh chan OrderEvent, stateCh chan ElevatorState, localOrdersCh chan elev.Orders, globalOrdersCh chan elev.Orders) {
 
 	timerResetCh := make(chan time.Duration)
 	timerTimeoutCh := make(chan bool)
@@ -38,9 +39,9 @@ func StateMachine(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, 
 
 				switch elev.Behaviour {
 				case ElevatorBehaviourMoving:
-					if ShouldStop(elev.Orders, elev) {
+					if(ShouldStop(elev)){
 						if OrderAtFloor(elev.Orders, elev.Floor) {
-							// Clear orders at current floor
+							// Clear elev.Orders at current floor
 							if elev.Direction == DirnUp {
 								orderEventCh <- OrderEvent{elev.Floor, OrderCallUp, false}
 							} else if elev.Direction == DirnDown {
@@ -93,7 +94,7 @@ func StateMachine(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, 
 		case globalOrders := <-globalOrdersCh:
 			for f := 0; f < NumFloors; f++ {
 				for b := 0; b < NumTypes; b++ {
-					lightEventCh <- LightEvent{LightType(b), f, globalOrders[f][b]}
+					lightEventCh <- LightEvent{LightType(b), f, globalelev.Orders[f][b]}
 				}
 			}
 		case <-timerTimeoutCh:

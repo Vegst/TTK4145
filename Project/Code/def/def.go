@@ -64,7 +64,11 @@ const (
 type Elevators map[string]Elevator
 
 type Elevator struct {
-	Floor     int
+	State ElevatorState
+	Orders Orders
+}
+type ElevatorState struct {
+	Floor int
 	Direction MotorDirection
 	Behaviour ElevatorBehaviour
 }
