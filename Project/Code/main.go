@@ -5,20 +5,37 @@ import (
 	"./elevator"
 	"./driver"
 	"./orders"
+	"./gui"
+	"./network/localip"
 	. "./def"
 	"flag"
+	"fmt"
+	"os"
 )
 
 func main() {
 
+	var id string
 	var simulator string
-	flag.StringVar(&simulator, "sim", "simulator1.con", "simulator config file")
+	flag.StringVar(&id, "id", "", "id of this peer")
+	flag.StringVar(&simulator, "sim", "", "simulator config file")
 	flag.Parse()
+
+	if id == "" {
+		localIP, err := localip.LocalIP()
+		if err != nil {
+			fmt.Println(err)
+			localIP = "DISCONNECTED"
+		}
+		id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
+	}
+	if simulator == "" {
+		simulator = "simulator1.con"
+	}
 
 
 	// Initialize system
 	driver.Init(driver.TypeSimulation, simulator)
-
 
 	// See documentation for full communication structure between main goroutines
 
@@ -37,9 +54,13 @@ func main() {
 	localOrdersCh := make(chan Orders, 10)
 	globalOrdersCh := make(chan Orders, 10)
 
+	// OrderManager <--> GUI
+	elevatorsCh := make(chan Elevators, 10)
+
 	go elevator.StateMachine(buttonEventCh, lightEventCh, stopCh, motorStateCh, floorCh, doorOpenCh, floorIndicatorCh, orderEventCh, stateCh, localOrdersCh, globalOrdersCh)
 	go driver.EventManager(buttonEventCh, lightEventCh, stopCh, motorStateCh, floorCh, doorOpenCh, floorIndicatorCh)
-	go orders.OrderManager(orderEventCh, stateCh, localOrdersCh, globalOrdersCh)
+	go orders.OrderManager(id, orderEventCh, stateCh, localOrdersCh, globalOrdersCh, elevatorsCh)
+	go gui.ElevatorVisualizer(elevatorsCh)
 
 	for {
 		select {
