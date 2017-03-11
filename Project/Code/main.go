@@ -6,11 +6,18 @@ import (
 	"./driver"
 	"./orders"
 	. "./def"
+	"flag"
 )
 
 func main() {
+
+	var simulator string
+	flag.StringVar(&simulator, "sim", "simulator1.con", "simulator config file")
+	flag.Parse()
+
+
 	// Initialize system
-	driver.Init(driver.TypeSimulation)
+	driver.Init(driver.TypeSimulation, simulator)
 
 
 	// See documentation for full communication structure between main goroutines

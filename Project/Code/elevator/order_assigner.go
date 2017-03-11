@@ -1,9 +1,11 @@
 package elevator
 
+/*
 import (
 	"../driver"
 	"fmt"
 	"math"
+	. "../def"
 )
 
 func CalculateCost(o OrderEvent, e Elevator) float64 {
@@ -20,8 +22,8 @@ func CalculateCost(o OrderEvent, e Elevator) float64 {
 		}
 	}
 
-	if o.Floor < e.Floor && e.Direction == driver.DirnUp ||
-		o.Floor > e.Floor && e.Direction == driver.DirnDown {
+	if o.Floor < e.Floor && e.Direction == DirnUp ||
+		o.Floor > e.Floor && e.Direction == DirnDown {
 		cost += 2
 	}
 	fmt.Println("Cost of new order for Elevator: ", cost)
@@ -41,3 +43,4 @@ func OrderAssigner(o OrderEvent, elevs [NumElevators]Elevator) int {
 	}
 	return e
 }
+*/

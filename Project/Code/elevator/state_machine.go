@@ -1,6 +1,7 @@
 package elevator
 
 import (
+	"time"
 	"./timer"
 	. "../def"
 	//"fmt"
@@ -14,6 +15,7 @@ func StateMachine(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, 
 	timerTimeoutCh := make(chan bool)
 	go timer.Timer(timerResetCh, timerTimeoutCh)
 	
+	var elev Elevator
 
 	// Initial state change
 	motorStateCh <- DirnUp

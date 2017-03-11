@@ -28,8 +28,8 @@ const (
 
 
 
-func Init(t Type) {
-	C.elev_init(C.elev_type(t))
+func Init(t Type, simulator string) {
+	C.elev_init(C.elev_type(t), C.CString(simulator))
 }
 
 func SetMotorDirection(dirn def.MotorDirection) {

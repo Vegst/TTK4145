@@ -7,7 +7,7 @@ simulator.con
 --numFloors             4           // Minimum: 2, maximum: 9
 
 --com_ip                localhost
---com_port              15657
+--com_port              15658
 
 --light_off             -
 --light_on              *
@@ -19,4 +19,4 @@ simulator.con
 --key_obstruction       -
 --key_moveUp            9
 --key_moveStop          8
---key_moveDown 7
+--key_moveDown          7
