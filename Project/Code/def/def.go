@@ -1,12 +1,11 @@
 package def
 
-
 // EventManager
 
 type ButtonEvent struct {
 	Floor  int
 	Button ButtonType
-	State bool
+	State  bool
 }
 
 type LightType int
@@ -25,13 +24,13 @@ type LightEvent struct {
 }
 
 // Orders
-type OrderEvent struct{
+type OrderEvent struct {
 	Floor int
-	Type OrderType
-	Flag bool
+	Type  OrderType
+	Flag  bool
 }
 
-type Orders [NumFloors][NumTypes] bool
+type Orders [NumFloors][NumTypes]bool
 
 const (
 	NumFloors = 4
@@ -40,28 +39,30 @@ const (
 
 type OrderType int
 
+const NumElevators = 3
+
 const (
 	OrderCallUp      OrderType = 0
 	OrderCallDown    OrderType = 1
 	OrderCallCommand OrderType = 2
 )
 
-
 // Elevator
 type ElevatorBehaviour int
+
 const (
-	ElevatorBehaviourIdle = 0
-	ElevatorBehaviourMoving = 1
+	ElevatorBehaviourIdle     = 0
+	ElevatorBehaviourMoving   = 1
 	ElevatorBehaviourDoorOpen = 2
 )
 
 type Elevators map[string]Elevator
 
 type Elevator struct {
-	Floor int
+	Floor     int
 	Direction MotorDirection
 	Behaviour ElevatorBehaviour
-	Orders Orders
+	Orders    Orders
 }
 
 // Driver

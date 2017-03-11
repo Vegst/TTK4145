@@ -1,9 +1,10 @@
 package main
 
 import (
-	"time"
-	"./elevator"
+	. "./def"
 	"./driver"
+	"./elevator"
+	"./network"
 	"./orders"
 	"./gui"
 	"./network/localip"
@@ -11,6 +12,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 )
 
 func main() {
@@ -53,6 +55,22 @@ func main() {
 	stateCh := make(chan Elevator, 10)
 	localOrdersCh := make(chan Orders, 10)
 	globalOrdersCh := make(chan Orders, 10)
+
+	// OrderManager <--> StateMachine
+
+	peerUpdateCh := make(chan peers.PeerUpdate)
+	peerTxEnable := make(chan bool)
+
+	helloTx := make(chan HelloMsg)
+	helloRx := make(chan HelloMsg)
+
+	go peers.Transmitter(15647, id, peerTxEnable)
+	go peers.Receiver(15647, peerUpdateCh)
+
+	go bcast.Transmitter(16569, helloTx)
+	go bcast.Receiver(16569, helloRx)
+
+	go network.Network(helloTx, helloRx, peerTxEnable, peerUpdateCh, localOrdersCh, orderEventCh)
 
 	// OrderManager <--> GUI
 	elevatorsCh := make(chan Elevators, 10)
