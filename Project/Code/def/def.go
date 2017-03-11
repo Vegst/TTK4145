@@ -55,6 +55,8 @@ const (
 	ElevatorBehaviourDoorOpen = 2
 )
 
+type Elevators map[string]Elevator
+
 type Elevator struct {
 	Floor int
 	Direction MotorDirection
