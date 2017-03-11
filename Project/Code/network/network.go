@@ -1,13 +1,12 @@
 package network
 
 import (
-	"./network/bcast"
-	"./network/localip"
-	"./network/peers"
-	"flag"
+	"./bcast"
+	//"./localip"
+	. "../def"
+	"./peers"
 	"fmt"
-	"os"
-	"time"
+	//"time"
 )
 
 type Message struct {
@@ -15,41 +14,19 @@ type Message struct {
 	Iter    int
 }
 
-func Network(id string, ) {
-
-	peerUpdateCh := make(chan peers.PeerUpdate)
-	peerTxEnable := make(chan bool)
-
-	helloTx := make(chan HelloMsg)
-	helloRx := make(chan HelloMsg)
-
-	go peers.Transmitter(15647, id, peerTxEnable)
-	go peers.Receiver(15647, peerUpdateCh)
-
-	go bcast.Transmitter(16569, helloTx)
-	go bcast.Receiver(16569, helloRx)
-
-
-	go func() {
-		helloMsg := HelloMsg{"Hello from " + id, 0}
-		for {
-			helloMsg.Iter++
-			helloTx <- helloMsg
-			time.Sleep(1 * time.Second)
-		}
-	}()
-
+func Network(txCh chan Message, rxCh <-chan Message, peerTxEnable chan bool, peerUpdateCh <-chan peers.PeerUpdate, localOrdersCh <-chan Orders, orderEventCh chan OrderEvent) {
 	fmt.Println("Started")
 	for {
 		select {
-		case p := <-peerUpdateCh:
+		case rxMsg := <-rxCh:
+			fmt.Printf("Peer update:%q\n", rxMsg)
+		case peerUpdate := <-peerUpdateCh:
 			fmt.Printf("Peer update:\n")
-			fmt.Printf("  Peers:    %q\n", p.Peers)
-			fmt.Printf("  New:      %q\n", p.New)
-			fmt.Printf("  Lost:     %q\n", p.Lost)
+			fmt.Printf("  Peers:    %q\n", peerUpdate.Peers)
+			fmt.Printf("  New:      %q\n", peerUpdate.New)
+			fmt.Printf("  Lost:     %q\n", peerUpdate.Lost)
+		case orders := <-localOrdersCh:
 
-		case a := <-helloRx:
-			fmt.Printf("Received: %#v\n", a)
 		}
 	}
 }

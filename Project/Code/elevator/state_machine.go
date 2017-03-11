@@ -1,20 +1,18 @@
 package elevator
 
 import (
-	"time"
-	"./timer"
 	. "../def"
+	"./timer"
+	"time"
 	//"fmt"
 )
 
-
 func StateMachine(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, stopCh chan bool, motorStateCh chan MotorDirection, floorCh chan int, doorOpenCh chan bool, floorIndicatorCh chan int, orderEventCh chan OrderEvent, stateCh chan Elevator, localOrdersCh chan Orders, globalOrdersCh chan Orders) {
-
 
 	timerResetCh := make(chan time.Duration)
 	timerTimeoutCh := make(chan bool)
 	go timer.Timer(timerResetCh, timerTimeoutCh)
-	
+
 	var elev Elevator
 
 	// Initial state change
@@ -27,18 +25,20 @@ func StateMachine(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, 
 		// Event: Button pressed
 		case buttonEvent := <-buttonEventCh:
 			if buttonEvent.State {
-				orderEventCh <- OrderEvent{buttonEvent.Floor, OrderType(buttonEvent.Button), true}
+				oe := OrderEvent{buttonEvent.Floor, OrderType(buttonEvent.Button), true}
+				orderEventCh <- oe
+				CalculateCost(oe, elev)
 			}
 		// Event: Stop command
-		case <- stopCh:
+		case <-stopCh:
 		// Event: Floor reached
 		case elev.Floor = <-floorCh:
 			if elev.Floor >= 0 && elev.Floor < NumFloors {
 				floorIndicatorCh <- elev.Floor
-				
-				switch(elev.Behaviour) {
+
+				switch elev.Behaviour {
 				case ElevatorBehaviourMoving:
-					if(ShouldStop(elev.Orders, elev)){
+					if ShouldStop(elev.Orders, elev) {
 						if OrderAtFloor(elev.Orders, elev.Floor) {
 							// Clear orders at current floor
 							if elev.Direction == DirnUp {
@@ -61,9 +61,9 @@ func StateMachine(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, 
 					}
 				}
 			}
-			
-		case elev.Orders = <- localOrdersCh:
-			switch(elev.Behaviour) {
+
+		case elev.Orders = <-localOrdersCh:
+			switch elev.Behaviour {
 			case ElevatorBehaviourDoorOpen:
 				if OrderAtFloor(elev.Orders, elev.Floor) {
 					orderEventCh <- OrderEvent{elev.Floor, OrderCallUp, false}
@@ -97,7 +97,7 @@ func StateMachine(buttonEventCh chan ButtonEvent, lightEventCh chan LightEvent, 
 				}
 			}
 		case <-timerTimeoutCh:
-			switch(elev.Behaviour) {
+			switch elev.Behaviour {
 			case ElevatorBehaviourDoorOpen:
 				elev.Direction = GetDirection(elev.Orders, elev)
 				if elev.Direction == DirnStop {

@@ -1,22 +1,20 @@
 package elevator
 
-/*
 import (
-	"../driver"
+	. "../def"
 	"fmt"
 	"math"
-	. "../def"
 )
 
 func CalculateCost(o OrderEvent, e Elevator) float64 {
 	cost := float64(0)
-	cost += math.Abs(float64(o.Floor - e.Floor))
+	cost += math.Abs(float64((o.Floor - e.Floor) * 10))
 
 	//Adds cost for each f
 	for i := 0; i < NumFloors; i++ {
 		for j := 0; j < NumTypes; j++ {
 			if e.Orders[i][j] {
-				cost += 0.3
+				cost += 3
 			}
 			break
 		}
@@ -24,7 +22,7 @@ func CalculateCost(o OrderEvent, e Elevator) float64 {
 
 	if o.Floor < e.Floor && e.Direction == DirnUp ||
 		o.Floor > e.Floor && e.Direction == DirnDown {
-		cost += 2
+		cost += 20
 	}
 	fmt.Println("Cost of new order for Elevator: ", cost)
 	return cost
@@ -43,4 +41,3 @@ func OrderAssigner(o OrderEvent, elevs [NumElevators]Elevator) int {
 	}
 	return e
 }
-*/
