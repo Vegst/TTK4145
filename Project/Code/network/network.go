@@ -10,23 +10,32 @@ import (
 )
 
 type Message struct {
-	Message string
-	Iter    int
+	orders Orders
 }
 
-func Network(txCh chan Message, rxCh <-chan Message, peerTxEnable chan bool, peerUpdateCh <-chan peers.PeerUpdate, localOrdersCh <-chan Orders, orderEventCh chan OrderEvent) {
-	fmt.Println("Started")
+func broadcaster(){
+
+}
+
+func Network(txStateCh chan State, txOrderCh chan State, rxStateCh <-chan Message , rxOrderCh <-chan Message, ;
+	peerTxEnable chan bool, peerUpdateCh <-chan peers.PeerUpdate, localOrdersCh <-chan Orders, stateCh <-chan ElevatorState, ;
+	assignedOrderCh <- chan AssignedOrder, orderEventCh chan OrderEvent) {
+	var orders Orders
 	for {
 		select {
-		case rxMsg := <-rxCh:
-			fmt.Printf("Peer update:%q\n", rxMsg)
+		case rxState := <-rxStateCh:
+
+		case rxOrder := <-rxOrderCh:
+
 		case peerUpdate := <-peerUpdateCh:
 			fmt.Printf("Peer update:\n")
 			fmt.Printf("  Peers:    %q\n", peerUpdate.Peers)
 			fmt.Printf("  New:      %q\n", peerUpdate.New)
 			fmt.Printf("  Lost:     %q\n", peerUpdate.Lost)
-		case orders := <-localOrdersCh:
-
-		}
-	}
+		case elevState = <- stateCh:
+			txCh <- elevState
+		case a := assignedOrderCh:
+			pendingOrders[a.OrderEvent.Floor][a.OrderEvent.Type] == a.OrderEvent
+			txCh <- assignedOrder
+		case
 }

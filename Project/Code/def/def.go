@@ -30,6 +30,11 @@ type OrderEvent struct {
 	Flag  bool
 }
 
+type AssignedOrder struct {
+	OrderEvent OrderEvent
+	id         string
+}
+
 type Orders [NumFloors][NumTypes]bool
 
 const (
@@ -37,9 +42,9 @@ const (
 	NumTypes  = 3
 )
 
-type OrderType int
-
 const NumElevators = 3
+
+type OrderType int
 
 const (
 	OrderCallUp      OrderType = 0
@@ -62,7 +67,11 @@ type Elevator struct {
 	Floor     int
 	Direction MotorDirection
 	Behaviour ElevatorBehaviour
-	Orders    Orders
+}
+
+type ElevatorState struct {
+	Elevator Elevator
+	id       string
 }
 
 // Driver
