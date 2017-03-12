@@ -1,5 +1,6 @@
 package gui
 
+/*
 import (
 	. "../def"
 	"fmt"
@@ -63,3 +64,4 @@ func ElevatorVisualizer(elevatorsCh chan Elevators) {
 		}
 	}
 }
+*/

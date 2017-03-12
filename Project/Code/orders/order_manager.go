@@ -6,11 +6,11 @@ import (
 )
 
 
-func OrderManager(id string, orderEventCh <-chan OrderEvent, stateCh <-chan Elevator, localOrdersCh chan Orders, globalOrdersCh chan Orders, elevatorsCh chan Elevators) {
+func OrderManager(id string, orderEventCh <-chan OrderEvent, stateCh <-chan ElevatorState, localOrdersCh chan Orders, globalOrdersCh chan Orders, elevatorsCh chan Elevators) {
 	var elevators Elevators
 	var orders Orders
 	elevators = make(Elevators)
-	elevators[id] = Elevator{0,DirnStop,ElevatorBehaviourIdle,orders}
+	elevators[id] = Elevator{ElevatorState{0,DirnStop,ElevatorBehaviourIdle},orders}
 	elevatorsCh <- elevators
 	for {
 		select {

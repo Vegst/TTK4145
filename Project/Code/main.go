@@ -5,7 +5,7 @@ import (
 	"./elevator"
 	"./driver"
 	"./orders"
-	"./gui"
+	//"./gui"
 	"./network/localip"
 	. "./def"
 	"flag"
@@ -50,7 +50,7 @@ func main() {
 
 	// StateMachine <--> OrderManager
 	orderEventCh := make(chan OrderEvent, 10)
-	stateCh := make(chan Elevator, 10)
+	stateCh := make(chan ElevatorState, 10)
 	localOrdersCh := make(chan Orders, 10)
 	globalOrdersCh := make(chan Orders, 10)
 
@@ -60,7 +60,7 @@ func main() {
 	go elevator.StateMachine(buttonEventCh, lightEventCh, stopCh, motorStateCh, floorCh, doorOpenCh, floorIndicatorCh, orderEventCh, stateCh, localOrdersCh, globalOrdersCh)
 	go driver.EventManager(buttonEventCh, lightEventCh, stopCh, motorStateCh, floorCh, doorOpenCh, floorIndicatorCh)
 	go orders.OrderManager(id, orderEventCh, stateCh, localOrdersCh, globalOrdersCh, elevatorsCh)
-	go gui.ElevatorVisualizer(elevatorsCh)
+	//go gui.ElevatorVisualizer(elevatorsCh)
 
 	for {
 		select {
