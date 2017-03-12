@@ -2,35 +2,29 @@ package orders
 
 import (
 	. "../def"
-	//"../elevator"
-	"fmt"
+	"../elevator"
+	//"fmt"
 	"time"
 )
 
 func OrderManager(id string, orderEventCh <-chan OrderEvent, assignedOrderCh <-chan OrderEvent, assignmentCh chan Assignment, stateCh <-chan ElevatorState, updateElevatorCh <-chan Elevator, localOrdersCh chan Orders, globalOrdersCh chan Orders, elevatorCh chan Elevator, elevatorsCh chan Elevators) {
-	/*
+
 	var elevators Elevators
 	var orders Orders
 
 	elevators = make(Elevators)
-	localElevator := Elevator{ElevatorState{0, DirnStop, ElevatorBehaviourIdle}, orders, id}
-	elevatorCh <- localElevator
-	*/
+	elevators[id] = Elevator{ElevatorState{0, DirnStop, ElevatorBehaviourIdle}, orders, id}
+	elevatorsCh <- elevators
+
 	for {
 		select {
-		case <-assignedOrderCh:
-			fmt.Println("OrderManager for ", id, " received an order.")
-		case <-time.After(1 * time.Second):
-			if(id == "Heis1"){
-				assignmentCh <- Assignment{OrderEvent{2, OrderCallUp, true}, "Heis2"}
-			}
-		/*
+
 		case elev := <-updateElevatorCh:
 			elevators[id] = elev
 			elevatorsCh <- elevators
 
 		case orderEvent := <-orderEventCh:
-			elev := localElevator
+			elev := elevators[id]
 
 			//Assigning an order to an elevator
 			AssignmentID := elevator.OrderAssigner(orderEvent, elevators)
@@ -41,21 +35,17 @@ func OrderManager(id string, orderEventCh <-chan OrderEvent, assignedOrderCh <-c
 			elevatorCh <- elev
 
 		case <-stateCh:
-
 		
-			
-			elev := localElevator
+		case assignedOrder := <-assignedOrderCh:
+			elev := elevators[id]
 			elev.Orders[assignedOrder.Floor][assignedOrder.Type] = assignedOrder.Flag
-			localElevator = elev
+			elevators[id] = elev
 			localOrdersCh <- elev.Orders
 			globalOrdersCh <- elev.Orders
 			elevatorsCh <- elevators
-			
-		case <-time.After(5 * time.Second):
-			for k := range elevators{
-				fmt.Println("Elevator: %s", k)
-			}
-		*/
+
+
+		case <-time.After(50 * time.Millisecond):
 		}
 	}
 }

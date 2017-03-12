@@ -3,6 +3,7 @@ package elevator
 import (
 	. "../def"
 	"math"
+	"math/rand"
 )
 
 func CalculateCost(o OrderEvent, e Elevator) float64 {
@@ -30,12 +31,18 @@ func CalculateCost(o OrderEvent, e Elevator) float64 {
 func OrderAssigner(o OrderEvent, elevs Elevators) string {
 	var id string = ""
 	eCost := math.Inf(1)
+	r := rand.Intn(2) + 1
 	for k := range elevs {
 		iCost := float64(CalculateCost(o, elevs[k]))
 		if iCost < eCost {
 			id = k
 			eCost = iCost
 		}
+	}
+	if(r == 1){
+		id = "Heis1"
+	} else if(r == 2){
+		id = "Heis2"
 	}
 	return id
 }

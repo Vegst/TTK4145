@@ -4,7 +4,7 @@ import (
 	. "./def"
 	"./driver"
 	"./elevator"
-	"./gui"
+	//"./gui"
 	"./network"
 	"./network/bcast"
 	//"./network/conn"
@@ -85,7 +85,7 @@ func main() {
 	go driver.EventManager(buttonEventCh, lightEventCh, stopCh, motorStateCh, floorCh, doorOpenCh, floorIndicatorCh)
 	go orders.OrderManager(id, orderEventCh, assignedOrderCh, assignmentCh, stateCh, updateElevatorCh, localOrdersCh, globalOrdersCh, elevatorCh, elevatorsCh)
 
-	go gui.ElevatorVisualizer(elevatorsCh)
+	//go gui.ElevatorVisualizer(elevatorsCh)
 
 	for {
 		select {
