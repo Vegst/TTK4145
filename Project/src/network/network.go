@@ -10,15 +10,9 @@ import (
 	//"time"
 )
 
-type Message struct {
-	orders Orders
-}
-
-func broadcaster() {
-
-}
-
 func Network(id string, ordersEvents OrdersNetworkEvents) {
+
+	//var elevators Elevators
 	
 	peerUpdateCh := make(chan peers.PeerUpdate)
 	peerTxEnable := make(chan bool)
@@ -56,14 +50,16 @@ func Network(id string, ordersEvents OrdersNetworkEvents) {
 		case peerUpdate := <-peerUpdateCh:
 			if peerUpdate.New != "" {
 				if peerUpdate.New != id {
-					ordersEvents.ElevatorNew <- peerUpdate.New
+					ordersEvents.ElevatorNew <-peerUpdate.New
+					txAssignedStateCh <-AssignedState{id, ElevatorState{}}
 				}
 			}
 			for _,lostElevator := range peerUpdate.Lost {
 				if lostElevator != id {
-					ordersEvents.ElevatorLost <- lostElevator
+					ordersEvents.ElevatorLost <-lostElevator
 				}
 			}
+		case <-ordersEvents.Elevators:
 
 		}
 	}

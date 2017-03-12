@@ -66,6 +66,7 @@ func main() {
 		RxAssignedState: make(chan AssignedState, 10),
 		ElevatorNew: make(chan string, 10),
 		ElevatorLost: make(chan string, 10),
+		Elevators: make(chan Elevators, 10),
 	}
 
 	ordersGuiEvents := OrdersGuiEvents {
