@@ -2,7 +2,6 @@ package elevator
 
 import (
 	. "../def"
-	"fmt"
 	"math"
 )
 
@@ -24,7 +23,6 @@ func CalculateCost(o OrderEvent, e Elevator) float64 {
 		o.Floor > e.State.Floor && e.State.Direction == DirnDown {
 		cost += 20
 	}
-	fmt.Println("Cost of new order for Elevator: ", cost)
 	return cost
 
 }

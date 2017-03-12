@@ -30,7 +30,7 @@ type OrderEvent struct {
 	Flag  bool
 }
 
-type NetOrder struct {
+type Assignment struct {
 	OrderEvent OrderEvent
 	ID         string
 }

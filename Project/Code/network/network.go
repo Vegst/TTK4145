@@ -17,23 +17,18 @@ func broadcaster() {
 
 }
 
-func Network(ID string, txStateCh chan ElevatorState, txNetOrderCh chan NetOrder, rxStateCh <-chan ElevatorState, rxNetOrderCh <-chan NetOrder, peerTxEnable chan bool, peerUpdateCh <-chan peers.PeerUpdate, stateCh <-chan ElevatorState, updateElevatorCh chan Elevator, netOrderCh chan NetOrder, assignedOrderCh chan OrderEvent) {
-	var elevator Elevator
-	var pendingOrder NetOrder
+func Network(ID string, txAssignmentCh chan Assignment, rxAssignmentCh <-chan Assignment, assignmentCh <-chan Assignment, assignedOrderCh chan OrderEvent, txStateCh chan ElevatorState, rxStateCh <-chan ElevatorState,  peerTxEnable chan bool, peerUpdateCh <-chan peers.PeerUpdate, stateCh <-chan ElevatorState, updateElevatorCh chan Elevator) {
+	//var elevator Elevator
 	for {
 		select {
 		//Change state
-		case elevatorState := <-stateCh:
-			elevator.State = elevatorState
-			txStateCh <- elevatorState
-		//case updateState := <-rxStateCh:
-		//	updateStateCh <- updateState
-		case pendingOrder = <-netOrderCh:
-			fmt.Printf("Pending order on :    %s\n", pendingOrder.ID)
-		case rxNetOrder := <-rxNetOrderCh:
-			if rxNetOrder.ID == ID {
-				fmt.Printf("Received order on :    %s\n", pendingOrder.ID)
-				assignedOrderCh <- rxNetOrder.OrderEvent
+		case assignment := <- assignmentCh:
+			fmt.Println("Sent assignment from ", ID, " to ", assignment.ID)
+			txAssignmentCh <- assignment
+		case assignment := <- rxAssignmentCh:
+			if(assignment.ID == ID){
+				fmt.Println("Received assignment")
+				assignedOrderCh <- assignment.OrderEvent
 			}
 
 		case peerUpdate := <-peerUpdateCh:

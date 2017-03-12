@@ -58,11 +58,11 @@ func main() {
 	globalOrdersCh := make(chan Orders, 10)
 
 	// OrderManager <--> Network
-	netOrderCh := make(chan NetOrder, 10)
+	assignmentCh := make(chan Assignment, 10)
 	assignedOrderCh := make(chan OrderEvent, 10)
 
-	txNetOrderCh := make(chan NetOrder, 10)
-	rxNetOrderCh := make(chan NetOrder, 10)
+	txAssignmentCh := make(chan Assignment, 10)
+	rxAssignmentCh := make(chan Assignment, 10)
 	txStateCh := make(chan ElevatorState, 10)
 	rxStateCh := make(chan ElevatorState, 10)
 
@@ -73,18 +73,18 @@ func main() {
 	go peers.Transmitter(15647, id, peerTxEnable)
 	go peers.Receiver(15647, peerUpdateCh)
 
-	go bcast.Transmitter(16569, txNetOrderCh)
-	go bcast.Receiver(16569, rxNetOrderCh)
+	go bcast.Transmitter(16569, txAssignmentCh)
+	go bcast.Receiver(16569, rxAssignmentCh)
 
-	go network.Network(id, txStateCh, txNetOrderCh, rxStateCh, rxNetOrderCh, peerTxEnable, peerUpdateCh, stateCh, updateElevatorCh, netOrderCh, assignedOrderCh)
-
+	go network.Network(id, txAssignmentCh, rxAssignmentCh, assignmentCh, assignedOrderCh, txStateCh, rxStateCh,  peerTxEnable, peerUpdateCh, stateCh, updateElevatorCh)
 	// OrderManager <--> GUI
 	elevatorCh := make(chan Elevator, 10)
 	elevatorsCh := make(chan Elevators, 10)
 
 	go elevator.StateMachine(buttonEventCh, lightEventCh, stopCh, motorStateCh, floorCh, doorOpenCh, floorIndicatorCh, orderEventCh, stateCh, localOrdersCh, globalOrdersCh)
 	go driver.EventManager(buttonEventCh, lightEventCh, stopCh, motorStateCh, floorCh, doorOpenCh, floorIndicatorCh)
-	go orders.OrderManager(id, orderEventCh, assignedOrderCh, stateCh, updateElevatorCh, localOrdersCh, globalOrdersCh, elevatorCh, elevatorsCh, netOrderCh)
+	go orders.OrderManager(id, orderEventCh, assignedOrderCh, assignmentCh, stateCh, updateElevatorCh, localOrdersCh, globalOrdersCh, elevatorCh, elevatorsCh)
+
 	go gui.ElevatorVisualizer(elevatorsCh)
 
 	for {
