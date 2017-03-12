@@ -1,5 +1,6 @@
 package def
 
+
 // EventManager
 
 type ButtonEvent struct {
@@ -30,9 +31,13 @@ type OrderEvent struct {
 	Flag  bool
 }
 
-type Assignment struct {
-	OrderEvent OrderEvent
+type AssignedOrder struct {
 	ID         string
+	OrderEvent OrderEvent
+}
+type AssignedState struct {
+	ID string
+	State ElevatorState
 }
 
 type Orders [NumFloors][NumTypes]bool
@@ -90,3 +95,33 @@ const (
 	ButtonCallDown    ButtonType = 1
 	ButtonCallCommand ButtonType = 2
 )
+
+
+type DriverElevatorEvents struct {
+	Button chan ButtonEvent
+	Light chan LightEvent
+	Stop chan bool
+	MotorDirection chan MotorDirection
+	Floor chan int
+	DoorOpen chan bool
+	FloorIndicator chan int
+}
+
+type ElevatorOrdersEvents struct {
+	Order chan OrderEvent
+	State chan ElevatorState
+	LocalOrders chan Orders
+	GlobalOrders chan Orders
+}
+
+type OrdersNetworkEvents struct {
+	TxAssignedOrder chan AssignedOrder
+	RxAssignedOrder chan AssignedOrder
+	TxAssignedState chan AssignedState
+	RxAssignedState chan AssignedState
+	Elevators chan Elevators
+}
+
+type OrdersGuiEvents struct {
+	Elevators chan Elevators
+}

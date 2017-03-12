@@ -4,8 +4,8 @@ import (
 	//"./bcast"
 	//"./localip"
 	. "../def"
-	"./peers"
-	"fmt"
+	//"./peers"
+	//"fmt"
 	//"time"
 )
 
@@ -17,14 +17,15 @@ func broadcaster() {
 
 }
 
-func Network(ID string, txAssignmentCh chan Assignment, rxAssignmentCh <-chan Assignment, assignmentCh <-chan Assignment, assignedOrderCh chan OrderEvent, txStateCh chan ElevatorState, rxStateCh <-chan ElevatorState,  peerTxEnable chan bool, peerUpdateCh <-chan peers.PeerUpdate, stateCh <-chan ElevatorState, updateElevatorCh chan Elevator) {
+func Network(ID string, ordersEvents OrdersNetworkEvents) {
 	//var elevator Elevator
+	/*
 	for {
 		select {
 		//Change state
-		case assignment := <- assignmentCh:
+		case assignment := <- ordersEvents.TxAssignedOrder:
 			fmt.Println("Sent assignment from ", ID, " to ", assignment.ID)
-			txAssignmentCh <- assignment
+			//txAssignmentCh <- assignment
 		case assignment := <- rxAssignmentCh:
 			if(assignment.ID == ID){
 				fmt.Println("Received assignment")
@@ -38,4 +39,5 @@ func Network(ID string, txAssignmentCh chan Assignment, rxAssignmentCh <-chan As
 			fmt.Printf("  Lost:     %q\n", peerUpdate.Lost)
 		}
 	}
+	*/
 }

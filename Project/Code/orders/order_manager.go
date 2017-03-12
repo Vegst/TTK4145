@@ -2,40 +2,43 @@ package orders
 
 import (
 	. "../def"
-	"../elevator"
 	//"fmt"
 	"time"
 )
 
-func OrderManager(id string, orderEventCh <-chan OrderEvent, assignedOrderCh <-chan OrderEvent, assignmentCh chan Assignment, stateCh <-chan ElevatorState, updateElevatorCh <-chan Elevator, localOrdersCh chan Orders, globalOrdersCh chan Orders, elevatorCh chan Elevator, elevatorsCh chan Elevators) {
+func OrderManager(id string, elevatorEvents ElevatorOrdersEvents, networkEvents OrdersNetworkEvents, guiEvents OrdersGuiEvents) {
 
 	var elevators Elevators
 	var orders Orders
 
 	elevators = make(Elevators)
 	elevators[id] = Elevator{ElevatorState{0, DirnStop, ElevatorBehaviourIdle}, orders, id}
-	elevatorsCh <- elevators
+	guiEvents.Elevators <- elevators
 
 	for {
 		select {
 
+			/*
 		case elev := <-updateElevatorCh:
 			elevators[id] = elev
 			elevatorsCh <- elevators
-
-		case orderEvent := <-orderEventCh:
+	*/
+		case orderEvent := <-elevatorEvents.Order:
 			elev := elevators[id]
 
 			//Assigning an order to an elevator
-			AssignmentID := elevator.OrderAssigner(orderEvent, elevators)
-			assignmentCh <- Assignment{orderEvent, AssignmentID}
+			//AssignmentID := elevator.OrderAssigner(orderEvent, elevators)
+			//assignmentCh <- Assignment{orderEvent, AssignmentID}
 
 			elev.Orders[orderEvent.Floor][orderEvent.Type] = orderEvent.Flag
 			elevators[id] = elev
-			elevatorCh <- elev
+			guiEvents.Elevators <- elevators
+			elevatorEvents.LocalOrders <- elev.Orders
+			elevatorEvents.GlobalOrders <- elev.Orders
 
-		case <-stateCh:
+		case <-elevatorEvents.State:
 		
+		/*
 		case assignedOrder := <-assignedOrderCh:
 			elev := elevators[id]
 			elev.Orders[assignedOrder.Floor][assignedOrder.Type] = assignedOrder.Flag
@@ -43,7 +46,7 @@ func OrderManager(id string, orderEventCh <-chan OrderEvent, assignedOrderCh <-c
 			localOrdersCh <- elev.Orders
 			globalOrdersCh <- elev.Orders
 			elevatorsCh <- elevators
-
+		*/
 
 		case <-time.After(50 * time.Millisecond):
 		}

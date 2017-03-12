@@ -5,7 +5,7 @@ import (
 	"../def"
 )
 
-func EventManager(buttonEventCh chan def.ButtonEvent, lightEventCh chan def.LightEvent, stopCh chan bool, motorStateCh chan def.MotorDirection, floorCh chan int, doorOpenCh chan bool, floorIndicatorCh chan int) {
+func EventManager(elevatorEvents def.DriverElevatorEvents) {
 
 
 	// Storage of last states to detect change of state
@@ -25,34 +25,34 @@ func EventManager(buttonEventCh chan def.ButtonEvent, lightEventCh chan def.Ligh
 
 	for {
 		select {
-		case ms := <-motorStateCh:
-			SetMotorDirection(def.MotorDirection(ms))
-		case l := <-lightEventCh:
-			switch l.LightType {
+		case motorDirection := <-elevatorEvents.MotorDirection:
+			SetMotorDirection(motorDirection)
+		case light := <-elevatorEvents.Light:
+			switch light.LightType {
 			case def.LightTypeUp:
-				SetButtonLamp(def.ButtonCallUp, l.Floor, l.Value)
+				SetButtonLamp(def.ButtonCallUp, light.Floor, light.Value)
 			case def.LightTypeDown:
-				SetButtonLamp(def.ButtonCallDown, l.Floor, l.Value)
+				SetButtonLamp(def.ButtonCallDown, light.Floor, light.Value)
 			case def.LightTypeCommand:
-				SetButtonLamp(def.ButtonCallCommand, l.Floor, l.Value)
+				SetButtonLamp(def.ButtonCallCommand, light.Floor, light.Value)
 			case def.LightTypeStop:
-				SetStopLamp(l.Value)
+				SetStopLamp(light.Value)
 			}
-		case doorOpen := <-doorOpenCh:
+		case doorOpen := <-elevatorEvents.DoorOpen:
 			SetDoorOpenLamp(doorOpen)
-		case floorIndicator := <-floorIndicatorCh:
+		case floorIndicator := <-elevatorEvents.FloorIndicator:
 			SetFloorIndicator(floorIndicator)
 		case <-time.After(10 * time.Millisecond):
 			stopState = GetStopSignal()
 			if stopState != lastStopState {
 				lastStopState = stopState
-				stopCh <- stopState
+				elevatorEvents.Stop <- stopState
 			}
 
 			floorState = GetFloorSignal()
 			if floorState != lastFloorState {
 				lastFloorState = floorState
-				floorCh <- floorState
+				elevatorEvents.Floor <- floorState
 			}
 
 			for f := 0; f < NumFloors; f++ {
@@ -66,7 +66,7 @@ func EventManager(buttonEventCh chan def.ButtonEvent, lightEventCh chan def.Ligh
 					buttonState = GetButtonSignal(def.ButtonType(b), f)
 					if buttonState != lastButtonState[f][b] {
 						lastButtonState[f][b] = buttonState
-						buttonEventCh <- def.ButtonEvent{f, def.ButtonType(b), buttonState}
+						elevatorEvents.Button <- def.ButtonEvent{f, def.ButtonType(b), buttonState}
 					}
 				}
 			}

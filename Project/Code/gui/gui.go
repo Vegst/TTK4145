@@ -49,14 +49,14 @@ func print(elevators Elevators) {
 	fmt.Println()
 }
 
-func ElevatorVisualizer(elevatorsCh chan Elevators) {
+func ElevatorVisualizer(ordersGuiEvents OrdersGuiEvents) {
 	elevators := make(Elevators)
 	clearTerminal()
 	print(elevators)
 
 	for {
 		select {
-		case elevators = <-elevatorsCh:
+		case elevators = <-ordersGuiEvents.Elevators:
 			clearTerminal()
 			print(elevators)
 		case <-time.After(100 * time.Millisecond):
