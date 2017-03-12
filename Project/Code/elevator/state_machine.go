@@ -19,6 +19,7 @@ func StateMachine(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrders
 	driverEvents.MotorDirection <- DirnUp
 	elev.State.Direction = DirnUp
 	elev.State.Behaviour = ElevatorBehaviourMoving
+	ordersEvents.State <- elev.State
 
 	for {
 		select {
@@ -33,33 +34,36 @@ func StateMachine(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrders
 		case <-driverEvents.Stop:
 		// Event: Floor reached
 		case elev.State.Floor = <-driverEvents.Floor:
-			if elev.State.Floor >= 0 && elev.State.Floor < NumFloors {
-				driverEvents.FloorIndicator <- elev.State.Floor
+			ordersEvents.State <- elev.State
+			driverEvents.FloorIndicator <- elev.State.Floor
 
-				switch elev.State.Behaviour {
-				case ElevatorBehaviourMoving:
-					if ShouldStop(elev) {
-						if OrderAtFloor(elev) {
-							// Clear elev.Orders at current floor
-							if elev.State.Direction == DirnUp {
-								ordersEvents.Order <- OrderEvent{elev.State.Floor, OrderCallUp, false}
-							} else if elev.State.Direction == DirnDown {
-								ordersEvents.Order <- OrderEvent{elev.State.Floor, OrderCallDown, false}
-							}
-							ordersEvents.Order <- OrderEvent{elev.State.Floor, OrderCallCommand, false}
-
-							driverEvents.DoorOpen <- true
-							timerResetCh <- time.Second * 3
-							driverEvents.MotorDirection <- DirnStop
-
-							elev.State.Behaviour = ElevatorBehaviourDoorOpen
-						} else {
-							driverEvents.MotorDirection <- DirnStop
-							elev.State.Behaviour = ElevatorBehaviourIdle
-							elev.State.Direction = DirnStop
+			switch elev.State.Behaviour {
+			case ElevatorBehaviourMoving:
+				if ShouldStop(elev) {
+					if OrderAtFloor(elev) {
+						// Clear elev.Orders at current floor
+						if elev.State.Direction == DirnUp {
+							ordersEvents.Order <- OrderEvent{elev.State.Floor, OrderCallUp, false}
+						} else if elev.State.Direction == DirnDown {
+							ordersEvents.Order <- OrderEvent{elev.State.Floor, OrderCallDown, false}
 						}
+						ordersEvents.State <- elev.State
+						ordersEvents.Order <- OrderEvent{elev.State.Floor, OrderCallCommand, false}
+
+						driverEvents.DoorOpen <- true
+						timerResetCh <- time.Second * 3
+						driverEvents.MotorDirection <- DirnStop
+
+						elev.State.Behaviour = ElevatorBehaviourDoorOpen
+						ordersEvents.State <- elev.State
+					} else {
+						elev.State.Behaviour = ElevatorBehaviourIdle
+						elev.State.Direction = DirnStop
+						ordersEvents.State <- elev.State
+						driverEvents.MotorDirection <- DirnStop
 					}
 				}
+			
 			}
 
 		case elev.Orders = <-ordersEvents.LocalOrders:
@@ -79,6 +83,7 @@ func StateMachine(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrders
 					timerResetCh <- time.Second * 3
 					driverEvents.DoorOpen <- true
 					elev.State.Behaviour = ElevatorBehaviourDoorOpen
+					ordersEvents.State <- elev.State
 
 				} else {
 					elev.State.Direction = GetDirection(elev)
@@ -87,6 +92,7 @@ func StateMachine(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrders
 					} else {
 						elev.State.Behaviour = ElevatorBehaviourMoving
 					}
+					ordersEvents.State <- elev.State
 					driverEvents.MotorDirection <- elev.State.Direction
 				}
 			}
@@ -105,6 +111,7 @@ func StateMachine(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrders
 				} else {
 					elev.State.Behaviour = ElevatorBehaviourMoving
 				}
+				ordersEvents.State <- elev.State
 				driverEvents.MotorDirection <- elev.State.Direction
 				driverEvents.DoorOpen <- false
 			}

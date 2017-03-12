@@ -17,26 +17,28 @@ func clearTerminal() {
 func print(elevators Elevators) {
 	for id, elevator := range elevators {
 		fmt.Println("ELEVATOR", id)
-		for f, orders := range elevator.Orders {
+		fmt.Println("State		Up	Down	Command")
+		for f := len(elevator.Orders)-1; f >= 0; f-- {
 			if f == elevator.State.Floor {
 				switch elevator.State.Direction {
 				case DirnUp:
-					fmt.Print("/\\")
+					fmt.Print("ˆ ")
 				case DirnDown:
-					fmt.Print("\\/")
+					fmt.Print("v ")
 				case DirnStop:
-					fmt.Print("X")
+					fmt.Print("  ")
 				}
 				switch elevator.State.Behaviour {
 				case ElevatorBehaviourIdle:
-					fmt.Print("I")
+					fmt.Print(" []")
 				case ElevatorBehaviourMoving:
-					fmt.Print("M")
+					fmt.Print(" []*")
 				case ElevatorBehaviourDoorOpen:
-					fmt.Print("DO")
+					fmt.Print("[  ]")
 				}
 			}
-			for _, order := range orders {
+			fmt.Print("	")
+			for _, order := range elevator.Orders[f] {
 				if order {
 					fmt.Print("	*")
 				} else {

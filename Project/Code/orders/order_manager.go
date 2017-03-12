@@ -4,6 +4,7 @@ import (
 	. "../def"
 	//"fmt"
 	"time"
+	"fmt"
 )
 
 func OrderManager(id string, elevatorEvents ElevatorOrdersEvents, networkEvents OrdersNetworkEvents, guiEvents OrdersGuiEvents) {
@@ -28,7 +29,7 @@ func OrderManager(id string, elevatorEvents ElevatorOrdersEvents, networkEvents 
 
 			//Assigning an order to an elevator
 			//AssignmentID := elevator.OrderAssigner(orderEvent, elevators)
-			//assignmentCh <- Assignment{orderEvent, AssignmentID}
+			//assignmentCh <- AssignedOrder{orderEvent, id}
 
 			elev.Orders[orderEvent.Floor][orderEvent.Type] = orderEvent.Flag
 			elevators[id] = elev
@@ -36,8 +37,12 @@ func OrderManager(id string, elevatorEvents ElevatorOrdersEvents, networkEvents 
 			elevatorEvents.LocalOrders <- elev.Orders
 			elevatorEvents.GlobalOrders <- elev.Orders
 
-		case <-elevatorEvents.State:
-		
+		case state := <-elevatorEvents.State:
+			fmt.Println("test")
+			elev := elevators[id]
+			elev.State = state
+			elevators[id] = elev
+			guiEvents.Elevators <- elevators
 		/*
 		case assignedOrder := <-assignedOrderCh:
 			elev := elevators[id]

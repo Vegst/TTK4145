@@ -52,7 +52,9 @@ func EventManager(elevatorEvents def.DriverElevatorEvents) {
 			floorState = GetFloorSignal()
 			if floorState != lastFloorState {
 				lastFloorState = floorState
-				elevatorEvents.Floor <- floorState
+				if floorState>= 0 && floorState < NumFloors {
+					elevatorEvents.Floor <- floorState
+				}
 			}
 
 			for f := 0; f < NumFloors; f++ {
