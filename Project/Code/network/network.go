@@ -4,7 +4,8 @@ import (
 	//"./bcast"
 	//"./localip"
 	. "../def"
-	//"./peers"
+	"./peers"
+	"./bcast"
 	//"fmt"
 	//"time"
 )
@@ -17,27 +18,53 @@ func broadcaster() {
 
 }
 
-func Network(ID string, ordersEvents OrdersNetworkEvents) {
-	//var elevator Elevator
-	/*
+func Network(id string, ordersEvents OrdersNetworkEvents) {
+	
+	peerUpdateCh := make(chan peers.PeerUpdate)
+	peerTxEnable := make(chan bool)
+
+	go peers.Transmitter(15647, id, peerTxEnable)
+	go peers.Receiver(15647, peerUpdateCh)
+
+	txAssignedStateCh := make(chan AssignedState)
+	rxAssignedStateCh := make(chan AssignedState)
+
+	txAssignedOrderCh := make(chan AssignedOrder)
+	rxAssignedOrderCh := make(chan AssignedOrder)
+
+	go bcast.Transmitter(16569, txAssignedStateCh, txAssignedOrderCh)
+	go bcast.Receiver(16569, rxAssignedStateCh, rxAssignedOrderCh)
+
 	for {
 		select {
-		//Change state
-		case assignment := <- ordersEvents.TxAssignedOrder:
-			fmt.Println("Sent assignment from ", ID, " to ", assignment.ID)
-			//txAssignmentCh <- assignment
-		case assignment := <- rxAssignmentCh:
-			if(assignment.ID == ID){
-				fmt.Println("Received assignment")
-				assignedOrderCh <- assignment.OrderEvent
+		case assignedState := <-ordersEvents.TxAssignedState:
+			txAssignedStateCh <-assignedState
+
+		case assignedState := <-rxAssignedStateCh:
+			if assignedState.Id != id {
+				ordersEvents.RxAssignedState <-assignedState
+			}
+
+		case assignedOrder := <-ordersEvents.TxAssignedOrder:
+			txAssignedOrderCh <-assignedOrder
+
+		case assignedOrder := <-rxAssignedOrderCh:
+			if assignedOrder.Id != id {
+				ordersEvents.RxAssignedOrder <-assignedOrder
 			}
 
 		case peerUpdate := <-peerUpdateCh:
-			fmt.Printf("Peer update:\n")
-			fmt.Printf("  Peers:    %q\n", peerUpdate.Peers)
-			fmt.Printf("  New:      %q\n", peerUpdate.New)
-			fmt.Printf("  Lost:     %q\n", peerUpdate.Lost)
+			if peerUpdate.New != "" {
+				if peerUpdate.New != id {
+					ordersEvents.ElevatorNew <- peerUpdate.New
+				}
+			}
+			for _,lostElevator := range peerUpdate.Lost {
+				if lostElevator != id {
+					ordersEvents.ElevatorLost <- lostElevator
+				}
+			}
+
 		}
 	}
-	*/
 }

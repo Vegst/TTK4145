@@ -64,6 +64,8 @@ func main() {
 		RxAssignedOrder: make(chan AssignedOrder, 10),
 		TxAssignedState: make(chan AssignedState, 10),
 		RxAssignedState: make(chan AssignedState, 10),
+		ElevatorNew: make(chan string, 10),
+		ElevatorLost: make(chan string, 10),
 	}
 
 	ordersGuiEvents := OrdersGuiEvents {
@@ -74,7 +76,7 @@ func main() {
 	go elevator.StateMachine(driverElevatorEvents, elevatorOrdersEvents)
 	go driver.EventManager(driverElevatorEvents)
 	go orders.OrderManager(id, elevatorOrdersEvents, ordersNetworkEvents, ordersGuiEvents)
-	go gui.ElevatorVisualizer(ordersGuiEvents)
+	go gui.ElevatorVisualizer(id, ordersGuiEvents)
 
 	for {
 		select {

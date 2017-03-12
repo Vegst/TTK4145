@@ -68,7 +68,7 @@ func EventManager(elevatorEvents def.DriverElevatorEvents) {
 					buttonState = GetButtonSignal(def.ButtonType(b), f)
 					if buttonState != lastButtonState[f][b] {
 						lastButtonState[f][b] = buttonState
-						elevatorEvents.Button <- def.ButtonEvent{f, def.ButtonType(b), buttonState}
+						elevatorEvents.Button <- def.ButtonEvent{def.Button{f, def.ButtonType(b)}, buttonState}
 					}
 				}
 			}

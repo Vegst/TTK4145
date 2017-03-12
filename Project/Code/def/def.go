@@ -4,9 +4,14 @@ package def
 // EventManager
 
 type ButtonEvent struct {
-	Floor  int
-	Button ButtonType
+	Button Button
 	State  bool
+}
+
+
+type Button struct {
+	Floor int
+	Type ButtonType
 }
 
 type LightType int
@@ -32,11 +37,11 @@ type OrderEvent struct {
 }
 
 type AssignedOrder struct {
-	ID         string
+	Id         string
 	OrderEvent OrderEvent
 }
 type AssignedState struct {
-	ID string
+	Id string
 	State ElevatorState
 }
 
@@ -47,7 +52,7 @@ const (
 	NumTypes  = 3
 )
 
-const NumElevators = 3
+//const NumElevators = 3
 
 type OrderType int
 
@@ -71,7 +76,6 @@ type Elevators map[string]Elevator
 type Elevator struct {
 	State  ElevatorState
 	Orders Orders
-	ID     string
 }
 type ElevatorState struct {
 	Floor     int
@@ -119,6 +123,8 @@ type OrdersNetworkEvents struct {
 	RxAssignedOrder chan AssignedOrder
 	TxAssignedState chan AssignedState
 	RxAssignedState chan AssignedState
+	ElevatorNew chan string
+	ElevatorLost chan string
 	Elevators chan Elevators
 }
 
