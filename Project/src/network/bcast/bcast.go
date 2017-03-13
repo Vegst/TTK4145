@@ -7,6 +7,8 @@ import (
 	"net"
 	"reflect"
 	"strings"
+	"math/rand"
+	"time"
 )
 
 // Encodes received values from `chans` into type-tagged JSON, then broadcasts
@@ -34,7 +36,11 @@ func Transmitter(port int, chans ...interface{}) {
 	for {
 		chosen, value, _ := reflect.Select(selectCases)
 		buf, _ := json.Marshal(value.Interface())
-		conn.WriteTo([]byte(typeNames[chosen]+string(buf)), addr)
+
+		rand.Seed(time.Now().UnixNano())
+		if rand.Float64() < 0.5 {
+			conn.WriteTo([]byte(typeNames[chosen]+string(buf)), addr)
+		}
 	}
 }
 
@@ -47,18 +53,21 @@ func Receiver(port int, chans ...interface{}) {
 	conn := conn.DialBroadcastUDP(port)
 	for {
 		n, _, _ := conn.ReadFrom(buf[0:])
-		for _, ch := range chans {
-			T := reflect.TypeOf(ch).Elem()
-			typeName := T.String()
-			if strings.HasPrefix(string(buf[0:n])+"{", typeName) {
-				v := reflect.New(T)
-				json.Unmarshal(buf[len(typeName):n], v.Interface())
+		rand.Seed(time.Now().UnixNano())
+		if rand.Float64() < 0.5 {
+			for _, ch := range chans {
+				T := reflect.TypeOf(ch).Elem()
+				typeName := T.String()
+				if strings.HasPrefix(string(buf[0:n])+"{", typeName) {
+					v := reflect.New(T)
+					json.Unmarshal(buf[len(typeName):n], v.Interface())
 
-				reflect.Select([]reflect.SelectCase{{
-					Dir:  reflect.SelectSend,
-					Chan: reflect.ValueOf(ch),
-					Send: reflect.Indirect(v),
-				}})
+					reflect.Select([]reflect.SelectCase{{
+						Dir:  reflect.SelectSend,
+						Chan: reflect.ValueOf(ch),
+						Send: reflect.Indirect(v),
+					}})
+				}
 			}
 		}
 	}

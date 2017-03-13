@@ -134,8 +134,7 @@ func StateMachine(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrders
 		// Event: Button pressed
 		case buttonEvent := <-driverEvents.Button:
 			if buttonEvent.State {
-				oe := OrderEvent{buttonEvent.Button.Floor, OrderType(buttonEvent.Button.Type), true}
-				ordersEvents.Order <- oe
+				ordersEvents.Order <- Order{buttonEvent.Button.Floor, OrderType(buttonEvent.Button.Type), true}
 			}
 		// Event: Stop command
 		case <-driverEvents.Stop:
@@ -151,12 +150,12 @@ func StateMachine(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrders
 					if OrderAtFloor(elev) {
 						// Clear elev.Orders at current floor
 						if elev.State.Direction == DirnUp {
-							ordersEvents.Order <- OrderEvent{elev.State.Floor, OrderCallUp, false}
+							ordersEvents.Order <- Order{elev.State.Floor, OrderCallUp, false}
 						} else if elev.State.Direction == DirnDown {
-							ordersEvents.Order <- OrderEvent{elev.State.Floor, OrderCallDown, false}
+							ordersEvents.Order <- Order{elev.State.Floor, OrderCallDown, false}
 						}
 						ordersEvents.State <- elev.State
-						ordersEvents.Order <- OrderEvent{elev.State.Floor, OrderCallCommand, false}
+						ordersEvents.Order <- Order{elev.State.Floor, OrderCallCommand, false}
 
 						driverEvents.DoorOpen <- true
 						timerResetCh <- time.Second * 3
@@ -181,16 +180,16 @@ func StateMachine(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrders
 			switch elev.State.Behaviour {
 			case ElevatorBehaviourDoorOpen:
 				if OrderAtFloor(elev) {
-					ordersEvents.Order <- OrderEvent{elev.State.Floor, OrderCallUp, false}
-					ordersEvents.Order <- OrderEvent{elev.State.Floor, OrderCallDown, false}
-					ordersEvents.Order <- OrderEvent{elev.State.Floor, OrderCallCommand, false}
+					ordersEvents.Order <- Order{elev.State.Floor, OrderCallUp, false}
+					ordersEvents.Order <- Order{elev.State.Floor, OrderCallDown, false}
+					ordersEvents.Order <- Order{elev.State.Floor, OrderCallCommand, false}
 					timerResetCh <- time.Second * 3
 				}
 			case ElevatorBehaviourIdle:
 				if OrderAtFloor(elev) {
-					ordersEvents.Order <- OrderEvent{elev.State.Floor, OrderCallUp, false}
-					ordersEvents.Order <- OrderEvent{elev.State.Floor, OrderCallDown, false}
-					ordersEvents.Order <- OrderEvent{elev.State.Floor, OrderCallCommand, false}
+					ordersEvents.Order <- Order{elev.State.Floor, OrderCallUp, false}
+					ordersEvents.Order <- Order{elev.State.Floor, OrderCallDown, false}
+					ordersEvents.Order <- Order{elev.State.Floor, OrderCallCommand, false}
 					timerResetCh <- time.Second * 3
 					driverEvents.DoorOpen <- true
 					elev.State.Behaviour = ElevatorBehaviourDoorOpen

@@ -5,7 +5,7 @@ import (
 	"math"
 )
 
-func CalculateCost(o OrderEvent, e Elevator) float64 {
+func CalculateCost(o Order, e Elevator) float64 {
 	cost := float64(0)
 	cost += math.Abs(float64((o.Floor - e.State.Floor) * 10))
 
@@ -27,7 +27,7 @@ func CalculateCost(o OrderEvent, e Elevator) float64 {
 
 }
 
-func OrderAssigner(id string, o OrderEvent, elevs Elevators) string {
+func OrderAssigner(id string, o Order, elevs Elevators) string {
 	if o.Type == OrderCallCommand {
 		return id
 	}

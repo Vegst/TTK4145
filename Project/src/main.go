@@ -44,7 +44,7 @@ func main() {
 
 	driverElevatorEvents := DriverElevatorEvents {
 		Button: make(chan ButtonEvent, 10),
-		Light: make(chan LightEvent, 1),
+		Light: make(chan LightEvent, 10),
 		Stop: make(chan bool, 10),
 		MotorDirection: make(chan MotorDirection, 10),
 		Floor: make(chan int, 10),
@@ -53,17 +53,17 @@ func main() {
 	}
 
 	elevatorOrdersEvents := ElevatorOrdersEvents {
-		Order: make(chan OrderEvent, 10),
+		Order: make(chan Order, 10),
 		State: make(chan ElevatorState, 10),
 		LocalOrders: make(chan Orders, 10),
 		GlobalOrders: make(chan Orders, 10),
 	}
 
 	ordersNetworkEvents := OrdersNetworkEvents {
-		TxMessageOrder: make(chan MessageOrder, 10),
-		RxMessageOrder: make(chan MessageOrder, 10),
-		TxMessageState: make(chan MessageState, 10),
-		RxMessageState: make(chan MessageState, 10),
+		TxOrderEvent: make(chan OrderEvent, 10),
+		RxOrderEvent: make(chan OrderEvent, 10),
+		TxStateEvent: make(chan StateEvent, 10),
+		RxStateEvent: make(chan StateEvent, 10),
 		ElevatorNew: make(chan string, 10),
 		ElevatorLost: make(chan string, 10),
 		Elevators: make(chan Elevators, 10),

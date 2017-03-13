@@ -18,7 +18,7 @@ func OrderManager(id string, elevatorEvents ElevatorOrdersEvents, networkEvents 
 		case orderEvent := <-elevatorEvents.Order:
 			assignedId := OrderAssigner(id, orderEvent, elevators)
 			elev := elevators[assignedId]
-			networkEvents.TxMessageOrder <- MessageOrder{id, assignedId, orderEvent}
+			networkEvents.TxOrderEvent <- OrderEvent{assignedId, orderEvent}
 			elev.Orders[orderEvent.Floor][orderEvent.Type] = orderEvent.Flag
 			elevators[assignedId] = elev
 
@@ -35,7 +35,7 @@ func OrderManager(id string, elevatorEvents ElevatorOrdersEvents, networkEvents 
 			elevators[id] = elev
 			guiEvents.Elevators <- misc.CopyElevators(elevators)
 			networkEvents.Elevators <- misc.CopyElevators(elevators)
-			networkEvents.TxMessageState <- MessageState{id, id, state}
+			networkEvents.TxStateEvent <- StateEvent{id, state}
 
 		case newElevator := <-networkEvents.ElevatorNew:
 			elevators[newElevator] = Elevator{
@@ -51,11 +51,11 @@ func OrderManager(id string, elevatorEvents ElevatorOrdersEvents, networkEvents 
 			for f,floorOrders := range lostOrders {
 				for t,order := range floorOrders {
 					if order {
-						orderEvent := OrderEvent{f,OrderType(t),true}
-						assignedId := OrderAssigner(id, orderEvent, elevators)
+						order := Order{f,OrderType(t),true}
+						assignedId := OrderAssigner(id, order, elevators)
 						elev := elevators[assignedId]
-						networkEvents.TxMessageOrder <- MessageOrder{id, assignedId, orderEvent}
-						elev.Orders[orderEvent.Floor][orderEvent.Type] = true
+						networkEvents.TxOrderEvent <- OrderEvent{assignedId, order}
+						elev.Orders[order.Floor][order.Type] = true
 						elevators[assignedId] = elev
 						if assignedId == id {
 							elevatorEvents.LocalOrders <- elevators[id].Orders
@@ -68,21 +68,21 @@ func OrderManager(id string, elevatorEvents ElevatorOrdersEvents, networkEvents 
 			guiEvents.Elevators <-misc.CopyElevators(elevators)
 			networkEvents.Elevators <- misc.CopyElevators(elevators)
 
-		case assignedState := <-networkEvents.RxMessageState:
-			elev := elevators[assignedState.Id]
-			elev.State = assignedState.State
-			elevators[assignedState.Id] = elev
+		case messageState := <-networkEvents.RxStateEvent:
+			elev := elevators[messageState.Target]
+			elev.State = messageState.State
+			elevators[messageState.Target] = elev
 			guiEvents.Elevators <- misc.CopyElevators(elevators)
 			networkEvents.Elevators <- misc.CopyElevators(elevators)
 
-		case assignedOrder := <-networkEvents.RxMessageOrder:
-			elev := elevators[assignedOrder.Id]
-			elev.Orders[assignedOrder.OrderEvent.Floor][assignedOrder.OrderEvent.Type] = assignedOrder.OrderEvent.Flag
-			elevators[assignedOrder.Id] = elev
+		case orderEvent := <-networkEvents.RxOrderEvent:
+			elev := elevators[orderEvent.Target]
+			elev.Orders[orderEvent.Order.Floor][orderEvent.Order.Type] = orderEvent.Order.Flag
+			elevators[orderEvent.Target] = elev
 			guiEvents.Elevators <- misc.CopyElevators(elevators)
 			networkEvents.Elevators <- misc.CopyElevators(elevators)
 
-			if assignedOrder.Id == id {
+			if orderEvent.Target == id {
 				elevatorEvents.LocalOrders <- elevators[id].Orders
 			}
 			elevatorEvents.GlobalOrders <- misc.GlobalOrders(elevators)

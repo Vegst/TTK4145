@@ -30,20 +30,18 @@ type LightEvent struct {
 }
 
 // Orders
-type OrderEvent struct {
+type Order struct {
 	Floor int
 	Type  OrderType
 	Flag  bool
 }
 
-type MessageOrder struct {
-	Source string
-	Id string
-	OrderEvent OrderEvent
+type OrderEvent struct {
+	Target string
+	Order Order
 }
-type MessageState struct {
-	Source string
-	Id string
+type StateEvent struct {
+	Target string
 	State ElevatorState
 }
 
@@ -114,17 +112,17 @@ type DriverElevatorEvents struct {
 }
 
 type ElevatorOrdersEvents struct {
-	Order chan OrderEvent
+	Order chan Order
 	State chan ElevatorState
 	LocalOrders chan Orders
 	GlobalOrders chan Orders
 }
 
 type OrdersNetworkEvents struct {
-	TxMessageOrder chan MessageOrder
-	RxMessageOrder chan MessageOrder
-	TxMessageState chan MessageState
-	RxMessageState chan MessageState
+	TxOrderEvent chan OrderEvent
+	RxOrderEvent chan OrderEvent
+	TxStateEvent chan StateEvent
+	RxStateEvent chan StateEvent
 	ElevatorNew chan string
 	ElevatorLost chan string
 	Elevators chan Elevators
