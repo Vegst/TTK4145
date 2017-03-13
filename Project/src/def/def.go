@@ -36,11 +36,13 @@ type OrderEvent struct {
 	Flag  bool
 }
 
-type AssignedOrder struct {
-	Id         string
+type MessageOrder struct {
+	Source string
+	Id string
 	OrderEvent OrderEvent
 }
-type AssignedState struct {
+type MessageState struct {
+	Source string
 	Id string
 	State ElevatorState
 }
@@ -119,10 +121,10 @@ type ElevatorOrdersEvents struct {
 }
 
 type OrdersNetworkEvents struct {
-	TxAssignedOrder chan AssignedOrder
-	RxAssignedOrder chan AssignedOrder
-	TxAssignedState chan AssignedState
-	RxAssignedState chan AssignedState
+	TxMessageOrder chan MessageOrder
+	RxMessageOrder chan MessageOrder
+	TxMessageState chan MessageState
+	RxMessageState chan MessageState
 	ElevatorNew chan string
 	ElevatorLost chan string
 	Elevators chan Elevators
@@ -130,4 +132,10 @@ type OrdersNetworkEvents struct {
 
 type OrdersGuiEvents struct {
 	Elevators chan Elevators
+}
+
+
+type MessageElevator struct {
+	Id string
+	Elevator Elevator
 }

@@ -12,46 +12,53 @@ import (
 
 func Network(id string, ordersEvents OrdersNetworkEvents) {
 
-	//var elevators Elevators
+	var elevators Elevators
 	
 	peerUpdateCh := make(chan peers.PeerUpdate)
 	peerTxEnable := make(chan bool)
 
-	go peers.Transmitter(15647, id, peerTxEnable)
-	go peers.Receiver(15647, peerUpdateCh)
+	go peers.Transmitter(20004, id, peerTxEnable)
+	go peers.Receiver(20004, peerUpdateCh)
 
-	txAssignedStateCh := make(chan AssignedState)
-	rxAssignedStateCh := make(chan AssignedState)
+	txMessageStateCh := make(chan MessageState)
+	rxMessageStateCh := make(chan MessageState)
 
-	txAssignedOrderCh := make(chan AssignedOrder)
-	rxAssignedOrderCh := make(chan AssignedOrder)
+	txMessageOrderCh := make(chan MessageOrder)
+	rxMessageOrderCh := make(chan MessageOrder)
 
-	go bcast.Transmitter(16569, txAssignedStateCh, txAssignedOrderCh)
-	go bcast.Receiver(16569, rxAssignedStateCh, rxAssignedOrderCh)
+	go bcast.Transmitter(26004, txMessageStateCh, txMessageOrderCh)
+	go bcast.Receiver(26004, rxMessageStateCh, rxMessageOrderCh)
 
 	for {
 		select {
-		case assignedState := <-ordersEvents.TxAssignedState:
-			txAssignedStateCh <-assignedState
+		case messageState := <-ordersEvents.TxMessageState:
+			txMessageStateCh <-messageState
 
-		case assignedState := <-rxAssignedStateCh:
-			if assignedState.Id != id {
-				ordersEvents.RxAssignedState <-assignedState
+		case messageOrder := <-ordersEvents.TxMessageOrder:
+			txMessageOrderCh <-messageOrder
+
+		case assignedState := <-rxMessageStateCh:
+			if assignedState.Source != id {
+				ordersEvents.RxMessageState <-assignedState
 			}
-
-		case assignedOrder := <-ordersEvents.TxAssignedOrder:
-			txAssignedOrderCh <-assignedOrder
-
-		case assignedOrder := <-rxAssignedOrderCh:
-			if assignedOrder.Id != id {
-				ordersEvents.RxAssignedOrder <-assignedOrder
+		case assignedOrder := <-rxMessageOrderCh:
+			if assignedOrder.Source != id {
+				ordersEvents.RxMessageOrder <-assignedOrder
 			}
 
 		case peerUpdate := <-peerUpdateCh:
 			if peerUpdate.New != "" {
 				if peerUpdate.New != id {
 					ordersEvents.ElevatorNew <-peerUpdate.New
-					txAssignedStateCh <-AssignedState{id, ElevatorState{}}
+					txMessageStateCh <-MessageState{id, id, elevators[id].State}
+					// Merge
+					for f,floorOrders := range elevators[id].Orders {
+						for t,order := range floorOrders {
+							if order {
+								txMessageOrderCh <-MessageOrder{id, id, OrderEvent{f,OrderType(t), true}}
+							}
+						}
+					}
 				}
 			}
 			for _,lostElevator := range peerUpdate.Lost {
@@ -59,7 +66,7 @@ func Network(id string, ordersEvents OrdersNetworkEvents) {
 					ordersEvents.ElevatorLost <-lostElevator
 				}
 			}
-		case <-ordersEvents.Elevators:
+		case elevators = <-ordersEvents.Elevators:
 
 		}
 	}

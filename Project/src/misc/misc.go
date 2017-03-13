@@ -11,12 +11,22 @@ func B2I(b bool) int {
 	return 0
 }
 
-func Copy(elevators Elevators) Elevators {
+func CopyElevators(elevators Elevators) Elevators {
 	newElevators := make(Elevators)
 	for k,v := range elevators {
 		newElevators[k] = v
 	}
 	return newElevators
+}
+
+func CopyOrders(orders Orders) Orders {
+	var newOrders Orders
+	for f,_ := range orders {
+		for t,_ := range orders[f] {
+			newOrders[f][t] = orders[f][t]
+		}
+	}
+	return newOrders
 }
 
 func Union(differentOrders []Orders) Orders {

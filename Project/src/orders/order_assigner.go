@@ -3,7 +3,6 @@ package orders
 import (
 	. "../def"
 	"math"
-	"math/rand"
 )
 
 func CalculateCost(o OrderEvent, e Elevator) float64 {
@@ -28,21 +27,18 @@ func CalculateCost(o OrderEvent, e Elevator) float64 {
 
 }
 
-func OrderAssigner(o OrderEvent, elevs Elevators) string {
-	var id string = ""
+func OrderAssigner(id string, o OrderEvent, elevs Elevators) string {
+	if o.Type == OrderCallCommand {
+		return id
+	}
+	var assignedId string = id
 	eCost := math.Inf(1)
-	r := rand.Intn(2) + 1
 	for k := range elevs {
 		iCost := float64(CalculateCost(o, elevs[k]))
 		if iCost < eCost {
-			id = k
+			assignedId = k
 			eCost = iCost
 		}
 	}
-	if(r == 1){
-		id = "Heis1"
-	} else if(r == 2){
-		id = "Heis2"
-	}
-	return id
+	return assignedId
 }

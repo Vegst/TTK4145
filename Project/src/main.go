@@ -60,10 +60,10 @@ func main() {
 	}
 
 	ordersNetworkEvents := OrdersNetworkEvents {
-		TxAssignedOrder: make(chan AssignedOrder, 10),
-		RxAssignedOrder: make(chan AssignedOrder, 10),
-		TxAssignedState: make(chan AssignedState, 10),
-		RxAssignedState: make(chan AssignedState, 10),
+		TxMessageOrder: make(chan MessageOrder, 10),
+		RxMessageOrder: make(chan MessageOrder, 10),
+		TxMessageState: make(chan MessageState, 10),
+		RxMessageState: make(chan MessageState, 10),
 		ElevatorNew: make(chan string, 10),
 		ElevatorLost: make(chan string, 10),
 		Elevators: make(chan Elevators, 10),
