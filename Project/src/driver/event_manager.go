@@ -25,8 +25,10 @@ func EventManager(elevatorEvents def.DriverElevatorEvents) {
 
 	for {
 		select {
+			
 		case motorDirection := <-elevatorEvents.MotorDirection:
 			SetMotorDirection(motorDirection)
+
 		case light := <-elevatorEvents.Light:
 			switch light.LightType {
 			case def.LightTypeUp:
@@ -38,10 +40,13 @@ func EventManager(elevatorEvents def.DriverElevatorEvents) {
 			case def.LightTypeStop:
 				SetStopLamp(light.Value)
 			}
+
 		case doorOpen := <-elevatorEvents.DoorOpen:
 			SetDoorOpenLamp(doorOpen)
+
 		case floorIndicator := <-elevatorEvents.FloorIndicator:
 			SetFloorIndicator(floorIndicator)
+
 		case <-time.After(10 * time.Millisecond):
 			stopState = GetStopSignal()
 			if stopState != lastStopState {

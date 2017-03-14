@@ -4,7 +4,7 @@ import (
 	. "../def"
 )
 
-func OrderAtFloor(orders Orders, floor int) bool{
+func IsOrderAtFloor(orders Orders, floor int) bool {
 	for o := 0; o < NumTypes; o++{
 		if(orders[floor][o]){
 			return true
@@ -48,6 +48,16 @@ func ShouldStop(orders Orders, floor int, direction MotorDirection) bool{
 	}
 	return true
 }
+/*
+func GetOrdersToClear(orders Orders, floor int, direction MotorDirection) {
+
+	if sm.State.Direction == DirnUp {
+		sm.OrdersEvents.Order <- Order{sm.State.Floor, OrderCallUp, false}
+	} else if sm.State.Direction == DirnDown {
+		sm.OrdersEvents.Order <- Order{sm.State.Floor, OrderCallDown, false}
+	}
+	sm.OrdersEvents.Order <- Order{sm.State.Floor, OrderCallCommand, false}
+}*/
 
 func checkAbove(orders Orders, floor int) bool{
 	for f := floor+1; f < NumFloors; f++{

@@ -74,7 +74,7 @@ func main() {
 	}
 
 	go network.Network(id, ordersNetworkEvents)
-	go elevator.StateMachine(driverElevatorEvents, elevatorOrdersEvents)
+	go elevator.EventManager(driverElevatorEvents, elevatorOrdersEvents)
 	go driver.EventManager(driverElevatorEvents)
 	go orders.OrderManager(id, elevatorOrdersEvents, ordersNetworkEvents, ordersGuiEvents)
 	go gui.ElevatorVisualizer(id, ordersGuiEvents)

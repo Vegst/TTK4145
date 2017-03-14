@@ -102,16 +102,18 @@ func Network(id string, ordersEvents OrdersNetworkEvents) {
 
 		// New/Lost id
 		case peerUpdate := <-peerUpdateCh:
-			if peerUpdate.New != id {
-				ordersEvents.ElevatorNew <-peerUpdate.New
-				buffer.EnqueueStateMessage(StateMessage{id, id+string(messageId), StateEvent{id, elevators[id].State}})
-				messageId++
-				// Merge
-				for f,_ := range elevators[id].Orders {
-					for t,_ := range elevators[id].Orders[f] {
-						if elevators[id].Orders[f][t] {
-							buffer.EnqueueOrderMessage(OrderMessage{id, id+string(messageId), OrderEvent{id, Order{f,OrderType(t), true}}})
-							messageId++
+			if peerUpdate.New != "" {
+				if peerUpdate.New != id {
+					ordersEvents.ElevatorNew <-peerUpdate.New
+					buffer.EnqueueStateMessage(StateMessage{id, id+string(messageId), StateEvent{id, elevators[id].State}})
+					messageId++
+					// Merge
+					for f,_ := range elevators[id].Orders {
+						for t,_ := range elevators[id].Orders[f] {
+							if elevators[id].Orders[f][t] {
+								buffer.EnqueueOrderMessage(OrderMessage{id, id+string(messageId), OrderEvent{id, Order{f,OrderType(t), true}}})
+								messageId++
+							}
 						}
 					}
 				}

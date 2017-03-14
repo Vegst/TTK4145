@@ -1,237 +1,159 @@
-/*
 package elevator
 
 import (
 	. "../def"
-	"./timer"
-	"time"
-	"fmt"
 )
 
+type StateMachine struct {
+	DriverEvents DriverElevatorEvents
+	OrdersEvents ElevatorOrdersEvents
+	DoorTimerResetCh chan bool
+	ErrorTimerResetCh chan bool
 
-func (state *ElevatorState) OnInit(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrdersEvents) {
-	state = ElevatorState{Floor: -1, Direction: DirnUp, Behaviour: ElevatorBehaviourMoving}
-	driverEvents.MotorDirection <- DirnUp
-	ordersEvents.State <- state
+
+
+	State ElevatorState
+	Orders Orders
 }
 
-func (state *ElevatorState) OnButtonPressed(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrdersEvents, button Button) {
-	ordersEvents.Order <- OrderEvent{button.Floor, OrderType(buttonEvent.Button), true}
+func NewStateMachine(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrdersEvents, doorTimerResetCh chan bool, errorTimerResetCh chan bool) *StateMachine {
+	sm := new(StateMachine)
+	sm.DriverEvents = driverEvents
+	sm.OrdersEvents = ordersEvents
+	sm.DoorTimerResetCh = doorTimerResetCh
+	sm.ErrorTimerResetCh = errorTimerResetCh
+	sm.State = ElevatorState{Active: false, Floor: -1, Direction: DirnStop, Behaviour: ElevatorBehaviourIdle}
+	sm.Orders= Orders{{}}
+	return sm
 }
 
-func (state *ElevatorState) OnStopBegin(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrdersEvents) {
-
+func (sm *StateMachine) OnInit() {
+	sm.State.Direction = DirnUp
+	sm.State.Behaviour = ElevatorBehaviourMoving
+	sm.DriverEvents.MotorDirection <- DirnUp
+	sm.OrdersEvents.State <- sm.State
 }
 
-func (state *ElevatorState) OnStopEnd(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrdersEvents) {
-
+func (sm *StateMachine) OnButtonPressed(button Button) {
+	sm.OrdersEvents.Order <- Order{button.Floor, OrderType(button.Type), true}
 }
 
-func (state *ElevatorState) OnFloorReached(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrdersEvents, floor int) {
-	state.Floor = <-driverEvents.Floor:
-	ordersEvents.State <- state
-	driverEvents.FloorIndicator <- state.Floor
+func (sm *StateMachine) OnButtonReleased(button Button) {}
 
-	switch state.Behaviour {
+func (sm *StateMachine) OnStopPressed() {
+	if sm.State.Active {
+		sm.State.Active = false
+		sm.DriverEvents.MotorDirection <- DirnStop
+		sm.DriverEvents.Light <- LightEvent{LightTypeStop, 0, true}
+		sm.OrdersEvents.State <- sm.State
+	}
+}
+
+func (sm *StateMachine) OnStopReleased() {}
+
+func (sm *StateMachine) OnFloorReached(floor int) {
+	sm.State.Floor = floor
+	sm.OrdersEvents.State <- sm.State
+	sm.DriverEvents.FloorIndicator <- sm.State.Floor
+
+	switch sm.State.Behaviour {
 	case ElevatorBehaviourMoving:
-		if ShouldStop(elev) {
-			if OrderAtFloor(elev) {
-				// Clear orders at current floor
-				if state.Direction == DirnUp {
-					ordersEvents.Order <- OrderEvent{state.Floor, OrderCallUp, false}
-				} else if state.Direction == DirnDown {
-					ordersEvents.Order <- OrderEvent{state.Floor, OrderCallDown, false}
+		if !sm.State.Active {
+			sm.State.Active = true
+			sm.OrdersEvents.State <- sm.State
+		}
+		if ShouldStop(sm.Orders, sm.State.Floor, sm.State.Direction) {
+			if IsOrderAtFloor(sm.Orders, sm.State.Floor) {
+				if sm.State.Direction == DirnUp {
+					sm.OrdersEvents.Order <- Order{sm.State.Floor, OrderCallUp, false}
+				} else if sm.State.Direction == DirnDown {
+					sm.OrdersEvents.Order <- Order{sm.State.Floor, OrderCallDown, false}
 				}
-				ordersEvents.State <- state
-				ordersEvents.Order <- OrderEvent{state.Floor, OrderCallCommand, false}
+				sm.OrdersEvents.Order <- Order{sm.State.Floor, OrderCallCommand, false}
 
-				driverEvents.DoorOpen <- true
-				timerResetCh <- time.Second * 3
-				driverEvents.MotorDirection <- DirnStop
+				sm.DriverEvents.DoorOpen <- true
+				sm.DoorTimerResetCh <- true
+				sm.DriverEvents.MotorDirection <- DirnStop
 
-				state.Behaviour = ElevatorBehaviourDoorOpen
-				ordersEvents.State <- state
+				sm.State.Behaviour = ElevatorBehaviourDoorOpen
 			} else {
-				state.Behaviour = ElevatorBehaviourIdle
-				state.Direction = DirnStop
-				ordersEvents.State <- state
-				driverEvents.MotorDirection <- DirnStop
+				sm.State.Behaviour = ElevatorBehaviourIdle
+				sm.State.Direction = DirnStop
 			}
+			sm.DriverEvents.MotorDirection <- DirnStop
+			sm.OrdersEvents.State <- sm.State
 		}
 	
 	}
 }
 
-func (state *ElevatorState) OnLocalOrdersUpdated(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrdersEvents, orders Orders) {
+func (sm *StateMachine) OnLocalOrdersUpdated(localOrders Orders) {
+	sm.Orders = localOrders
 	for f := 0; f < NumFloors; f++ {
-		driverEvents.Light <- LightEvent{LightType(OrderCallCommand), f, orders[f][OrderCallCommand]}
+		sm.DriverEvents.Light <- LightEvent{LightType(OrderCallCommand), f, sm.Orders[f][OrderCallCommand]}
 	}
-	elev := Elevator{state, orders}
-	switch state.Behaviour {
+	if sm.State.Active {
+		switch sm.State.Behaviour {
+		case ElevatorBehaviourDoorOpen:
+			if IsOrderAtFloor(sm.Orders, sm.State.Floor) {
+				sm.OrdersEvents.Order <- Order{sm.State.Floor, OrderCallUp, false}
+				sm.OrdersEvents.Order <- Order{sm.State.Floor, OrderCallDown, false}
+				sm.OrdersEvents.Order <- Order{sm.State.Floor, OrderCallCommand, false}
+				sm.DoorTimerResetCh <- true
+			}
+		case ElevatorBehaviourIdle:
+			if IsOrderAtFloor(sm.Orders, sm.State.Floor) {
+				sm.OrdersEvents.Order <- Order{sm.State.Floor, OrderCallUp, false}
+				sm.OrdersEvents.Order <- Order{sm.State.Floor, OrderCallDown, false}
+				sm.OrdersEvents.Order <- Order{sm.State.Floor, OrderCallCommand, false}
+				sm.DoorTimerResetCh <- true
+				sm.DriverEvents.DoorOpen <- true
+				sm.State.Behaviour = ElevatorBehaviourDoorOpen
+				sm.OrdersEvents.State <- sm.State
+
+			} else {
+				sm.State.Direction = GetDirection(sm.Orders, sm.State.Floor, sm.State.Direction)
+				if sm.State.Direction == DirnStop {
+					sm.State.Behaviour = ElevatorBehaviourIdle
+				} else {
+					sm.State.Behaviour = ElevatorBehaviourMoving
+				}
+				sm.OrdersEvents.State <- sm.State
+				sm.DriverEvents.MotorDirection <- sm.State.Direction
+			}
+		}
+	}
+}
+
+func (sm *StateMachine) OnGlobalOrdersUpdated(globalOrders Orders) {
+	for f := 0; f < NumFloors; f++ {
+		sm.DriverEvents.Light <- LightEvent{LightType(OrderCallDown), f, globalOrders[f][OrderCallDown]}
+		sm.DriverEvents.Light <- LightEvent{LightType(OrderCallUp), f, globalOrders[f][OrderCallUp]}
+	}
+}
+
+func (sm *StateMachine) OnDoorTimerTimeout() {
+	switch sm.State.Behaviour {
 	case ElevatorBehaviourDoorOpen:
-		if OrderAtFloor(elev) {
-			ordersEvents.Order <- OrderEvent{state.Floor, OrderCallUp, false}
-			ordersEvents.Order <- OrderEvent{state.Floor, OrderCallDown, false}
-			ordersEvents.Order <- OrderEvent{state.Floor, OrderCallCommand, false}
-			timerResetCh <- time.Second * 3
-		}
-	case ElevatorBehaviourIdle:
-		if OrderAtFloor(elev) {
-			ordersEvents.Order <- OrderEvent{state.Floor, OrderCallUp, false}
-			ordersEvents.Order <- OrderEvent{state.Floor, OrderCallDown, false}
-			ordersEvents.Order <- OrderEvent{state.Floor, OrderCallCommand, false}
-			timerResetCh <- time.Second * 3
-			driverEvents.DoorOpen <- true
-			state.Behaviour = ElevatorBehaviourDoorOpen
-			ordersEvents.State <- state
-
-		} else {
-			state.Direction = GetDirection(elev)
-			if state.Direction == DirnStop {
-				state.Behaviour = ElevatorBehaviourIdle
+		if sm.State.Active {
+			sm.State.Direction = GetDirection(sm.Orders, sm.State.Floor, sm.State.Direction)
+			if sm.State.Direction == DirnStop {
+				sm.State.Behaviour = ElevatorBehaviourIdle
 			} else {
-				state.Behaviour = ElevatorBehaviourMoving
+				sm.State.Behaviour = ElevatorBehaviourMoving
 			}
-			ordersEvents.State <- state
-			driverEvents.MotorDirection <- state.Direction
+			sm.OrdersEvents.State <- sm.State
+			sm.DriverEvents.MotorDirection <- sm.State.Direction
+			sm.DriverEvents.DoorOpen <- false
 		}
 	}
 }
 
-
-func (state *ElevatorState) OnGlobalOrdersUpdated(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrdersEvents, orders Orders) {
-	for f := 0; f < NumFloors; f++ {
-		driverEvents.Light <- LightEvent{LightType(OrderCallDown), f, globalOrders[f][OrderCallDown]}
-		driverEvents.Light <- LightEvent{LightType(OrderCallUp), f, globalOrders[f][OrderCallUp]}
-	}
-}
-*/
-package elevator
-
-import (
-	. "../def"
-	"./timer"
-	"time"
-)
-
-func StateMachine(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrdersEvents) {
-
-	timerResetCh := make(chan time.Duration)
-	timerTimeoutCh := make(chan bool)
-	go timer.Timer(timerResetCh, timerTimeoutCh)
-
-	// Initial state
-	state := ElevatorState{Active: false, Floor: -1, Direction: DirnUp, Behaviour: ElevatorBehaviourMoving}
-	orders := Orders{{}}
-	
-	driverEvents.MotorDirection <- DirnUp
-	ordersEvents.State <- state
-
-	for {
-		select {
-		// Event: Button pressed
-		case buttonEvent := <-driverEvents.Button:
-			if buttonEvent.State {
-				ordersEvents.Order <- Order{buttonEvent.Button.Floor, OrderType(buttonEvent.Button.Type), true}
-			}
-
-		// Event: Stop command
-		case <-driverEvents.Stop:
-			driverEvents.MotorDirection <- DirnStop
-			state.Active = false
-			ordersEvents.State <- state
-
-
-		// Event: Floor reached
-		case state.Floor = <-driverEvents.Floor:
-			ordersEvents.State <- state
-			driverEvents.FloorIndicator <- state.Floor
-
-			switch state.Behaviour {
-			case ElevatorBehaviourMoving:
-				if !state.Active {
-					state.Active = true
-					ordersEvents.State <- state
-				}
-				if ShouldStop(orders, state.Floor, state.Direction) {
-					if OrderAtFloor(orders, state.Floor) {
-						if state.Direction == DirnUp {
-							ordersEvents.Order <- Order{state.Floor, OrderCallUp, false}
-						} else if state.Direction == DirnDown {
-							ordersEvents.Order <- Order{state.Floor, OrderCallDown, false}
-						}
-						ordersEvents.Order <- Order{state.Floor, OrderCallCommand, false}
-
-						driverEvents.DoorOpen <- true
-						timerResetCh <- time.Second * 3
-						driverEvents.MotorDirection <- DirnStop
-
-						state.Behaviour = ElevatorBehaviourDoorOpen
-					} else {
-						state.Behaviour = ElevatorBehaviourIdle
-						state.Direction = DirnStop
-					}
-					driverEvents.MotorDirection <- DirnStop
-					ordersEvents.State <- state
-				}
-			
-			}
-
-		case orders = <-ordersEvents.LocalOrders:
-			for f := 0; f < NumFloors; f++ {
-				driverEvents.Light <- LightEvent{LightType(OrderCallCommand), f, orders[f][OrderCallCommand]}
-			}
-			switch state.Behaviour {
-			case ElevatorBehaviourDoorOpen:
-				if OrderAtFloor(orders, state.Floor) {
-					ordersEvents.Order <- Order{state.Floor, OrderCallUp, false}
-					ordersEvents.Order <- Order{state.Floor, OrderCallDown, false}
-					ordersEvents.Order <- Order{state.Floor, OrderCallCommand, false}
-					timerResetCh <- time.Second * 3
-				}
-			case ElevatorBehaviourIdle:
-				if OrderAtFloor(orders, state.Floor) {
-					ordersEvents.Order <- Order{state.Floor, OrderCallUp, false}
-					ordersEvents.Order <- Order{state.Floor, OrderCallDown, false}
-					ordersEvents.Order <- Order{state.Floor, OrderCallCommand, false}
-					timerResetCh <- time.Second * 3
-					driverEvents.DoorOpen <- true
-					state.Behaviour = ElevatorBehaviourDoorOpen
-					ordersEvents.State <- state
-
-				} else {
-					state.Direction = GetDirection(orders, state.Floor, state.Direction)
-					if state.Direction == DirnStop {
-						state.Behaviour = ElevatorBehaviourIdle
-					} else {
-						state.Behaviour = ElevatorBehaviourMoving
-					}
-					ordersEvents.State <- state
-					driverEvents.MotorDirection <- state.Direction
-				}
-			}
-
-		case globalOrders := <-ordersEvents.GlobalOrders:
-			for f := 0; f < NumFloors; f++ {
-				driverEvents.Light <- LightEvent{LightType(OrderCallDown), f, globalOrders[f][OrderCallDown]}
-				driverEvents.Light <- LightEvent{LightType(OrderCallUp), f, globalOrders[f][OrderCallUp]}
-			}
-
-		case <-timerTimeoutCh:
-			switch state.Behaviour {
-			case ElevatorBehaviourDoorOpen:
-				state.Direction = GetDirection(orders, state.Floor, state.Direction)
-				if state.Direction == DirnStop {
-					state.Behaviour = ElevatorBehaviourIdle
-				} else {
-					state.Behaviour = ElevatorBehaviourMoving
-				}
-				ordersEvents.State <- state
-				driverEvents.MotorDirection <- state.Direction
-				driverEvents.DoorOpen <- false
-			}
-
-		case <-time.After(10 * time.Millisecond):
-		}
+func (sm *StateMachine) OnErrorTimerTimeout() {
+	if sm.State.Active {
+		sm.State.Active = false
+		sm.DriverEvents.MotorDirection <- DirnStop
+		sm.DriverEvents.Light <- LightEvent{LightTypeStop, 0, true}
+		sm.OrdersEvents.State <- sm.State
 	}
 }

@@ -3,7 +3,6 @@ package orders
 import (
 	. "../def"
 	"math"
-	"fmt"
 )
 
 func numOrdersBelowToFloor(e Elevator, floor int) int{
@@ -70,6 +69,5 @@ func OrderAssigner(id string, o Order, elevs Elevators) string {
 			eCost = iCost
 		}
 	}
-	fmt.Printf("It will take %g seconds to reach floor %d",eCost, o.Floor)
 	return assignedId
 }
