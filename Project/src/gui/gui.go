@@ -33,12 +33,18 @@ func print(id string, elevators Elevators) {
 		} else {
 			fmt.Println("ELEVATOR", e)
 		}
-		fmt.Println("Floor	State	Up	Down	Command")
+		fmt.Println("Floor	State		Up	Down	Command")
 		for f := len(elevators[e].Orders)-1; f >= 0; f-- {
 			fmt.Print(f, "	")
+			
 			if f == len(elevators[e].Orders)-1 && elevators[e].State.Floor < 0 {
-				fmt.Print("U")
+				fmt.Print("U	")
 			} else if f == elevators[e].State.Floor {
+				if elevators[e].State.Active {
+					fmt.Print("(A) ")
+				} else {
+					fmt.Print("(I) ")
+				}
 				switch elevators[e].State.Direction {
 				case DirnUp:
 					fmt.Print("ˆ ")
@@ -55,6 +61,8 @@ func print(id string, elevators Elevators) {
 				case ElevatorBehaviourDoorOpen:
 					fmt.Print("[  ]")
 				}
+			} else {
+				fmt.Print("	")
 			}
 			for t, order := range elevators[e].Orders[f] {
 				fmt.Print("	")

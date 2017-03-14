@@ -1,30 +1,43 @@
 package network
 
-import (
-	. "../def"
-)
 
 type Buffer struct {
-	StateEvents map[string]StateEvent
-	OrderEvents map[string]OrderEvent
+	StateMessages []StateMessage
+	OrderMessages []OrderMessage
 }
 
 func NewBuffer() Buffer {
-    return Buffer{make(map[string]StateEvent), make(map[string]OrderEvent)}
+    return Buffer{make([]StateMessage, 0), make([]OrderMessage, 0)}
 }
 
-func (b *Buffer) AppendStateEvent(id string, stateEvent StateEvent) {
-	b.StateEvents[id] = stateEvent
+func (b *Buffer) EnqueueStateMessage(stateMessage StateMessage) {
+	b.StateMessages = append(b.StateMessages, stateMessage)
 }
 
-func (b *Buffer) AppendOrderEvent(id string, orderEvent OrderEvent) {
-	b.OrderEvents[id] = orderEvent
+func (b *Buffer) EnqueueOrderMessage(orderMessage OrderMessage) {
+	b.OrderMessages = append(b.OrderMessages, orderMessage)
 }
 
-func (b *Buffer) RemoveStateEvent(id string) {
-    delete(b.StateEvents, id)
+func (b *Buffer) DequeueStateMessage() {
+	b.StateMessages = b.StateMessages[1:]
 }
 
-func (b *Buffer) RemoveOrderEvent(id string) {
-    delete(b.OrderEvents, id)
+func (b *Buffer) DequeueOrderMessage() {
+	b.OrderMessages = b.OrderMessages[1:]
+}
+
+func (b *Buffer) TopStateMessage() StateMessage {
+	return b.StateMessages[0]
+}
+
+func (b *Buffer) TopOrderMessage() OrderMessage {
+	return b.OrderMessages[0]
+}
+
+func (b *Buffer) HasStateMessage() bool {
+	return len(b.StateMessages) > 0
+}
+
+func (b *Buffer) HasOrderMessage() bool {
+	return len(b.OrderMessages) > 0
 }

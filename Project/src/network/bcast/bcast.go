@@ -11,6 +11,9 @@ import (
 	"time"
 )
 
+
+const PackageLoss = 0.5
+
 // Encodes received values from `chans` into type-tagged JSON, then broadcasts
 // it on `port`
 func Transmitter(port int, chans ...interface{}) {
@@ -36,11 +39,7 @@ func Transmitter(port int, chans ...interface{}) {
 	for {
 		chosen, value, _ := reflect.Select(selectCases)
 		buf, _ := json.Marshal(value.Interface())
-
-		rand.Seed(time.Now().UnixNano())
-		if rand.Float64() < 0.5 {
-			conn.WriteTo([]byte(typeNames[chosen]+string(buf)), addr)
-		}
+		conn.WriteTo([]byte(typeNames[chosen]+string(buf)), addr)
 	}
 }
 
@@ -53,8 +52,8 @@ func Receiver(port int, chans ...interface{}) {
 	conn := conn.DialBroadcastUDP(port)
 	for {
 		n, _, _ := conn.ReadFrom(buf[0:])
-		rand.Seed(time.Now().UnixNano())
-		if rand.Float64() < 0.5 {
+		rand.Seed(time.Now().UTC().UnixNano())
+		if rand.Float64() >= PackageLoss {
 			for _, ch := range chans {
 				T := reflect.TypeOf(ch).Elem()
 				typeName := T.String()

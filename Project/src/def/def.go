@@ -78,6 +78,7 @@ type Elevator struct {
 	Orders Orders
 }
 type ElevatorState struct {
+	Active	  bool
 	Floor     int
 	Direction MotorDirection
 	Behaviour ElevatorBehaviour

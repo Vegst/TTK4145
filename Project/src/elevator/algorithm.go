@@ -1,34 +1,32 @@
-//
-
 package elevator
 
 import (
 	. "../def"
 )
 
-func OrderAtFloor(elev Elevator) bool{
+func OrderAtFloor(orders Orders, floor int) bool{
 	for o := 0; o < NumTypes; o++{
-		if(elev.Orders[elev.State.Floor][o]){
+		if(orders[floor][o]){
 			return true
 		}
 	}
 	return false
 }
 
-func GetDirection(elev Elevator) MotorDirection{
-	switch(elev.State.Direction) {
+func GetDirection(orders Orders, floor int, direction MotorDirection) MotorDirection{
+	switch(direction) {
 	case DirnUp:
-		if(checkAbove(elev)) {
+		if(checkAbove(orders, floor)) {
 			return DirnUp
-		} else if(checkBelow(elev)) {
+		} else if(checkBelow(orders, floor)) {
 			return DirnDown
 		} else{
 			return DirnStop
 		}
 	case DirnStop, DirnDown:
-		if(checkBelow(elev)) {
+		if(checkBelow(orders, floor)) {
 			return DirnDown
-		} else if(checkAbove(elev)) {
+		} else if(checkAbove(orders, floor)) {
 			return DirnUp
 		} else{
 			return DirnStop
@@ -37,24 +35,24 @@ func GetDirection(elev Elevator) MotorDirection{
 	return DirnStop
 }
 
-func ShouldStop(elev Elevator) bool{
-	switch(elev.State.Direction) {
+func ShouldStop(orders Orders, floor int, direction MotorDirection) bool{
+	switch(direction) {
 	case DirnDown:
-		return 	elev.Orders[elev.State.Floor][OrderCallCommand] ||
-				elev.Orders[elev.State.Floor][OrderCallDown] ||
-				!checkBelow(elev)
+		return 	orders[floor][OrderCallCommand] ||
+				orders[floor][OrderCallDown] ||
+				!checkBelow(orders, floor)
 	case DirnUp:
-		return 	elev.Orders[elev.State.Floor][OrderCallCommand] ||
-				elev.Orders[elev.State.Floor][OrderCallUp] ||
-				!checkAbove(elev) 	
+		return 	orders[floor][OrderCallCommand] ||
+				orders[floor][OrderCallUp] ||
+				!checkAbove(orders, floor) 	
 	}
 	return true
 }
 
-func checkAbove (elev Elevator) bool{
-	for f := elev.State.Floor+1; f < NumFloors; f++{
+func checkAbove(orders Orders, floor int) bool{
+	for f := floor+1; f < NumFloors; f++{
 		for o := 0; o < NumTypes; o++{
-			if(elev.Orders[f][o]){
+			if(orders[f][o]){
 				return true
 			}
 		}
@@ -62,10 +60,10 @@ func checkAbove (elev Elevator) bool{
 	return false
 }
 
-func checkBelow (elev Elevator) bool{
-	for f := 0; f < elev.State.Floor; f++{
+func checkBelow(orders Orders, floor int) bool{
+	for f := 0; f < floor; f++{
 		for o := 0; o < NumTypes; o++{
-			if(elev.Orders[f][o]){
+			if(orders[f][o]){
 				return true
 			}
 		}

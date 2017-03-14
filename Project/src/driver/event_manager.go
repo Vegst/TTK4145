@@ -17,7 +17,7 @@ func EventManager(elevatorEvents def.DriverElevatorEvents) {
 	}
 
 	lastStopState := GetStopSignal()
-	lastFloorState := GetFloorSignal()
+	lastFloorState := -1//GetFloorSignal()
 
 	var buttonState bool
 	var stopState bool

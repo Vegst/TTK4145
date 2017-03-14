@@ -65,11 +65,11 @@ func Network(id string, ordersEvents OrdersNetworkEvents) {
 
 		// Send messages
 		case stateEvent := <-ordersEvents.TxStateEvent:
-			buffer.AppendStateEvent(id+string(messageId), stateEvent)
+			buffer.EnqueueStateMessage(StateMessage{id, id+string(messageId), stateEvent})
 			messageId++
 
 		case orderEvent := <-ordersEvents.TxOrderEvent:
-			buffer.AppendOrderEvent(id+string(messageId), orderEvent)
+			buffer.EnqueueOrderMessage(OrderMessage{id, id+string(messageId), orderEvent})
 			messageId++
 
 		// Receive messages
@@ -88,28 +88,30 @@ func Network(id string, ordersEvents OrdersNetworkEvents) {
 		// Receive acks
 		case stateAck := <-rxStateAckCh:
 			if stateAck.Source != id {
-				buffer.RemoveStateEvent(stateAck.Id)
+				if stateAck.Id == buffer.TopStateMessage().Id {
+					buffer.DequeueStateMessage()
+				}
 			}
 
 		case orderAck := <-rxOrderAckCh:
 			if orderAck.Source != id {
-				buffer.RemoveOrderEvent(orderAck.Id)
+				if orderAck.Id == buffer.TopOrderMessage().Id {
+					buffer.DequeueOrderMessage()
+				}
 			}
 
 		// New/Lost id
 		case peerUpdate := <-peerUpdateCh:
-			if peerUpdate.New != "" {
-				if peerUpdate.New != id {
-					ordersEvents.ElevatorNew <-peerUpdate.New
-					buffer.AppendStateEvent(id+string(messageId), StateEvent{id, elevators[id].State})
-					messageId++
-					// Merge
-					for f,floorOrders := range elevators[id].Orders {
-						for t,order := range floorOrders {
-							if order {
-								buffer.AppendOrderEvent(id+string(messageId), OrderEvent{id, Order{f,OrderType(t), true}})
-								messageId++
-							}
+			if peerUpdate.New != id {
+				ordersEvents.ElevatorNew <-peerUpdate.New
+				buffer.EnqueueStateMessage(StateMessage{id, id+string(messageId), StateEvent{id, elevators[id].State}})
+				messageId++
+				// Merge
+				for f,_ := range elevators[id].Orders {
+					for t,_ := range elevators[id].Orders[f] {
+						if elevators[id].Orders[f][t] {
+							buffer.EnqueueOrderMessage(OrderMessage{id, id+string(messageId), OrderEvent{id, Order{f,OrderType(t), true}}})
+							messageId++
 						}
 					}
 				}
@@ -123,11 +125,11 @@ func Network(id string, ordersEvents OrdersNetworkEvents) {
 		case elevators = <-ordersEvents.Elevators:
 
 		case <-time.After(interval):
-			for messageId, stateEvent := range buffer.StateEvents {
-				txStateMessageCh <-StateMessage{id, messageId, stateEvent}
+			if buffer.HasStateMessage() {
+				txStateMessageCh <- buffer.TopStateMessage()
 			}
-			for messageId, orderEvent := range buffer.OrderEvents {
-				txOrderMessageCh <-OrderMessage{id, messageId, orderEvent}
+			if buffer.HasOrderMessage() {
+				txOrderMessageCh <- buffer.TopOrderMessage()
 			}
 		}
 	}
