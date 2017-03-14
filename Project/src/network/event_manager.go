@@ -1,12 +1,9 @@
 package network
 
 import (
-	//"./bcast"
-	//"./localip"
 	. "../def"
 	"./peers"
 	"./bcast"
-	//"fmt"
 	"time"
 )
 
@@ -32,12 +29,7 @@ type OrderAck struct {
 	Id string
 }
 
-func Network(id string, ordersEvents OrdersNetworkEvents) {
-
-	var elevators Elevators
-
-	buffer := NewBuffer()
-	messageId := 0
+func EventManager(id string, ordersEvents OrdersNetworkEvents) {
 	
 	peerUpdateCh := make(chan peers.PeerUpdate)
 	peerTxEnable := make(chan bool)
@@ -60,79 +52,54 @@ func Network(id string, ordersEvents OrdersNetworkEvents) {
 	go bcast.Transmitter(26004, txStateMessageCh, txOrderMessageCh, txStateAckCh, txOrderAckCh)
 	go bcast.Receiver(26004, rxStateMessageCh, rxOrderMessageCh, rxStateAckCh, rxOrderAckCh)
 
+	sm := NewStateMachine(id, ordersEvents, txStateMessageCh, txOrderMessageCh, txStateAckCh, txOrderAckCh)
+
 	for {
 		select {
 
-		// Send messages
 		case stateEvent := <-ordersEvents.TxStateEvent:
-			buffer.EnqueueStateMessage(StateMessage{id, id+string(messageId), stateEvent})
-			messageId++
+			sm.OnStateEventTransmit(stateEvent)
 
 		case orderEvent := <-ordersEvents.TxOrderEvent:
-			buffer.EnqueueOrderMessage(OrderMessage{id, id+string(messageId), orderEvent})
-			messageId++
+			sm.OnOrderEventTransmit(orderEvent)
 
-		// Receive messages
 		case stateMessage := <-rxStateMessageCh:
 			if stateMessage.Source != id {
-				ordersEvents.RxStateEvent <-stateMessage.StateEvent
-				txStateAckCh <-StateAck{id, stateMessage.Id}
+				sm.OnStateMessageReceived(stateMessage)
 			}
 
 		case orderMessage := <-rxOrderMessageCh:
 			if orderMessage.Source != id {
-				ordersEvents.RxOrderEvent <-orderMessage.OrderEvent
-				txOrderAckCh <-OrderAck{id, orderMessage.Id}
+				sm.OnOrderMessageReceived(orderMessage)
 			}
 
-		// Receive acks
 		case stateAck := <-rxStateAckCh:
 			if stateAck.Source != id {
-				if stateAck.Id == buffer.TopStateMessage().Id {
-					buffer.DequeueStateMessage()
-				}
+				sm.OnStateAckReceived(stateAck)
 			}
 
 		case orderAck := <-rxOrderAckCh:
 			if orderAck.Source != id {
-				if orderAck.Id == buffer.TopOrderMessage().Id {
-					buffer.DequeueOrderMessage()
-				}
+				sm.OnOrderAckReceived(orderAck)
 			}
 
-		// New/Lost id
 		case peerUpdate := <-peerUpdateCh:
 			if peerUpdate.New != "" {
 				if peerUpdate.New != id {
-					ordersEvents.ElevatorNew <-peerUpdate.New
-					buffer.EnqueueStateMessage(StateMessage{id, id+string(messageId), StateEvent{id, elevators[id].State}})
-					messageId++
-					// Merge
-					for f,_ := range elevators[id].Orders {
-						for t,_ := range elevators[id].Orders[f] {
-							if elevators[id].Orders[f][t] {
-								buffer.EnqueueOrderMessage(OrderMessage{id, id+string(messageId), OrderEvent{id, Order{f,OrderType(t), true}}})
-								messageId++
-							}
-						}
-					}
+					sm.OnPeerNew(peerUpdate.New)
 				}
 			}
 			for _,lostElevator := range peerUpdate.Lost {
 				if lostElevator != id {
-					ordersEvents.ElevatorLost <-lostElevator
+					sm.OnPeerLost(lostElevator)
 				}
 			}
 
-		case elevators = <-ordersEvents.Elevators:
+		case elevators := <-ordersEvents.Elevators:
+			sm.OnElevatorsUpdated(elevators)
 
 		case <-time.After(interval):
-			if buffer.HasStateMessage() {
-				txStateMessageCh <- buffer.TopStateMessage()
-			}
-			if buffer.HasOrderMessage() {
-				txOrderMessageCh <- buffer.TopOrderMessage()
-			}
+			sm.OnInterval()
 		}
 	}
 }

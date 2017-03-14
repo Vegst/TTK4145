@@ -73,7 +73,7 @@ func main() {
 		Elevators: make(chan Elevators, 10),
 	}
 
-	go network.Network(id, ordersNetworkEvents)
+	go network.EventManager(id, ordersNetworkEvents)
 	go elevator.EventManager(driverElevatorEvents, elevatorOrdersEvents)
 	go driver.EventManager(driverElevatorEvents)
 	go orders.OrderManager(id, elevatorOrdersEvents, ordersNetworkEvents, ordersGuiEvents)
