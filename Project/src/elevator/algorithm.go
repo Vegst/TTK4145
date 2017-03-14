@@ -4,29 +4,29 @@ import (
 	. "../def"
 )
 
-func IsOrderAtFloor(orders Orders, floor int) bool {
+func IsOrderAtFloor(e Elevator) bool {
 	for o := 0; o < NumTypes; o++{
-		if(orders[floor][o]){
+		if(e.Orders[e.State.Floor][o]){
 			return true
 		}
 	}
 	return false
 }
 
-func GetDirection(orders Orders, floor int, direction MotorDirection) MotorDirection{
-	switch(direction) {
+func GetDirection(e Elevator) MotorDirection{
+	switch(e.State.Direction) {
 	case DirnUp:
-		if(checkAbove(orders, floor)) {
+		if(checkAbove(e)) {
 			return DirnUp
-		} else if(checkBelow(orders, floor)) {
+		} else if(checkBelow(e)) {
 			return DirnDown
 		} else{
 			return DirnStop
 		}
 	case DirnStop, DirnDown:
-		if(checkBelow(orders, floor)) {
+		if(checkBelow(e)) {
 			return DirnDown
-		} else if(checkAbove(orders, floor)) {
+		} else if(checkAbove(e)) {
 			return DirnUp
 		} else{
 			return DirnStop
@@ -35,16 +35,16 @@ func GetDirection(orders Orders, floor int, direction MotorDirection) MotorDirec
 	return DirnStop
 }
 
-func ShouldStop(orders Orders, floor int, direction MotorDirection) bool{
-	switch(direction) {
+func ShouldStop(e Elevator) bool{
+	switch(e.State.Direction) {
 	case DirnDown:
-		return 	orders[floor][OrderCallCommand] ||
-				orders[floor][OrderCallDown] ||
-				!checkBelow(orders, floor)
+		return 	e.Orders[e.State.Floor][OrderCallCommand] ||
+				e.Orders[e.State.Floor][OrderCallDown] ||
+				!checkBelow(e)
 	case DirnUp:
-		return 	orders[floor][OrderCallCommand] ||
-				orders[floor][OrderCallUp] ||
-				!checkAbove(orders, floor) 	
+		return 	e.Orders[e.State.Floor][OrderCallCommand] ||
+				e.Orders[e.State.Floor][OrderCallUp] ||
+				!checkAbove(e) 	
 	}
 	return true
 }
@@ -59,10 +59,10 @@ func GetOrdersToClear(orders Orders, floor int, direction MotorDirection) {
 	sm.OrdersEvents.Order <- Order{sm.State.Floor, OrderCallCommand, false}
 }*/
 
-func checkAbove(orders Orders, floor int) bool{
-	for f := floor+1; f < NumFloors; f++{
+func checkAbove(e Elevator) bool{
+	for f := e.State.Floor+1; f < NumFloors; f++{
 		for o := 0; o < NumTypes; o++{
-			if(orders[f][o]){
+			if(e.Orders[f][o]){
 				return true
 			}
 		}
@@ -70,10 +70,10 @@ func checkAbove(orders Orders, floor int) bool{
 	return false
 }
 
-func checkBelow(orders Orders, floor int) bool{
-	for f := 0; f < floor; f++{
+func checkBelow(e Elevator) bool{
+	for f := 0; f < e.State.Floor; f++{
 		for o := 0; o < NumTypes; o++{
-			if(orders[f][o]){
+			if(e.Orders[f][o]){
 				return true
 			}
 		}

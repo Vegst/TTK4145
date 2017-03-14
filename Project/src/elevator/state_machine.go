@@ -12,8 +12,7 @@ type StateMachine struct {
 
 
 
-	State ElevatorState
-	Orders Orders
+	Elevator Elevator
 }
 
 func NewStateMachine(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrdersEvents, doorTimerResetCh chan bool, errorTimerResetCh chan bool) *StateMachine {
@@ -22,16 +21,16 @@ func NewStateMachine(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrd
 	sm.OrdersEvents = ordersEvents
 	sm.DoorTimerResetCh = doorTimerResetCh
 	sm.ErrorTimerResetCh = errorTimerResetCh
-	sm.State = ElevatorState{Active: false, Floor: -1, Direction: DirnStop, Behaviour: ElevatorBehaviourIdle}
-	sm.Orders= Orders{{}}
+	sm.Elevator.State = ElevatorState{Active: false, Floor: -1, Direction: DirnStop, Behaviour: ElevatorBehaviourIdle}
+	sm.Elevator.Orders= Orders{{}}
 	return sm
 }
 
 func (sm *StateMachine) OnInit() {
-	sm.State.Direction = DirnUp
-	sm.State.Behaviour = ElevatorBehaviourMoving
+	sm.Elevator.State.Direction = DirnUp
+	sm.Elevator.State.Behaviour = ElevatorBehaviourMoving
 	sm.DriverEvents.MotorDirection <- DirnUp
-	sm.OrdersEvents.State <- sm.State
+	sm.OrdersEvents.State <- sm.Elevator.State
 }
 
 func (sm *StateMachine) OnButtonPressed(button Button) {
@@ -41,85 +40,85 @@ func (sm *StateMachine) OnButtonPressed(button Button) {
 func (sm *StateMachine) OnButtonReleased(button Button) {}
 
 func (sm *StateMachine) OnStopPressed() {
-	if sm.State.Active {
-		sm.State.Active = false
+	if sm.Elevator.State.Active {
+		sm.Elevator.State.Active = false
 		sm.DriverEvents.MotorDirection <- DirnStop
 		sm.DriverEvents.Light <- LightEvent{LightTypeStop, 0, true}
-		sm.OrdersEvents.State <- sm.State
+		sm.OrdersEvents.State <- sm.Elevator.State
 	}
 }
 
 func (sm *StateMachine) OnStopReleased() {}
 
 func (sm *StateMachine) OnFloorReached(floor int) {
-	sm.State.Floor = floor
-	sm.OrdersEvents.State <- sm.State
-	sm.DriverEvents.FloorIndicator <- sm.State.Floor
+	sm.Elevator.State.Floor = floor
+	sm.OrdersEvents.State <- sm.Elevator.State
+	sm.DriverEvents.FloorIndicator <- sm.Elevator.State.Floor
 
-	switch sm.State.Behaviour {
+	switch sm.Elevator.State.Behaviour {
 	case ElevatorBehaviourMoving:
-		if !sm.State.Active {
-			sm.State.Active = true
-			sm.OrdersEvents.State <- sm.State
+		if !sm.Elevator.State.Active {
+			sm.Elevator.State.Active = true
+			sm.OrdersEvents.State <- sm.Elevator.State
 		}
-		if ShouldStop(sm.Orders, sm.State.Floor, sm.State.Direction) {
-			if IsOrderAtFloor(sm.Orders, sm.State.Floor) {
-				if sm.State.Direction == DirnUp {
-					sm.OrdersEvents.Order <- Order{sm.State.Floor, OrderCallUp, false}
-				} else if sm.State.Direction == DirnDown {
-					sm.OrdersEvents.Order <- Order{sm.State.Floor, OrderCallDown, false}
+		if ShouldStop(sm.Elevator) {
+			if IsOrderAtFloor(sm.Elevator) {
+				if sm.Elevator.State.Direction == DirnUp {
+					sm.OrdersEvents.Order <- Order{sm.Elevator.State.Floor, OrderCallUp, false}
+				} else if sm.Elevator.State.Direction == DirnDown {
+					sm.OrdersEvents.Order <- Order{sm.Elevator.State.Floor, OrderCallDown, false}
 				}
-				sm.OrdersEvents.Order <- Order{sm.State.Floor, OrderCallCommand, false}
+				sm.OrdersEvents.Order <- Order{sm.Elevator.State.Floor, OrderCallCommand, false}
 
 				sm.DriverEvents.DoorOpen <- true
 				sm.DoorTimerResetCh <- true
 				sm.DriverEvents.MotorDirection <- DirnStop
 
-				sm.State.Behaviour = ElevatorBehaviourDoorOpen
+				sm.Elevator.State.Behaviour = ElevatorBehaviourDoorOpen
 			} else {
-				sm.State.Behaviour = ElevatorBehaviourIdle
-				sm.State.Direction = DirnStop
+				sm.Elevator.State.Behaviour = ElevatorBehaviourIdle
+				sm.Elevator.State.Direction = DirnStop
 			}
 			sm.DriverEvents.MotorDirection <- DirnStop
-			sm.OrdersEvents.State <- sm.State
+			sm.OrdersEvents.State <- sm.Elevator.State
 		}
 	
 	}
 }
 
 func (sm *StateMachine) OnLocalOrdersUpdated(localOrders Orders) {
-	sm.Orders = localOrders
+	sm.Elevator.Orders = localOrders
 	for f := 0; f < NumFloors; f++ {
-		sm.DriverEvents.Light <- LightEvent{LightType(OrderCallCommand), f, sm.Orders[f][OrderCallCommand]}
+		sm.DriverEvents.Light <- LightEvent{LightType(OrderCallCommand), f, sm.Elevator.Orders[f][OrderCallCommand]}
 	}
-	if sm.State.Active {
-		switch sm.State.Behaviour {
+	if sm.Elevator.State.Active {
+		switch sm.Elevator.State.Behaviour {
 		case ElevatorBehaviourDoorOpen:
-			if IsOrderAtFloor(sm.Orders, sm.State.Floor) {
-				sm.OrdersEvents.Order <- Order{sm.State.Floor, OrderCallUp, false}
-				sm.OrdersEvents.Order <- Order{sm.State.Floor, OrderCallDown, false}
-				sm.OrdersEvents.Order <- Order{sm.State.Floor, OrderCallCommand, false}
+			if IsOrderAtFloor(sm.Elevator) {
+				sm.OrdersEvents.Order <- Order{sm.Elevator.State.Floor, OrderCallUp, false}
+				sm.OrdersEvents.Order <- Order{sm.Elevator.State.Floor, OrderCallDown, false}
+				sm.OrdersEvents.Order <- Order{sm.Elevator.State.Floor, OrderCallCommand, false}
 				sm.DoorTimerResetCh <- true
 			}
 		case ElevatorBehaviourIdle:
-			if IsOrderAtFloor(sm.Orders, sm.State.Floor) {
-				sm.OrdersEvents.Order <- Order{sm.State.Floor, OrderCallUp, false}
-				sm.OrdersEvents.Order <- Order{sm.State.Floor, OrderCallDown, false}
-				sm.OrdersEvents.Order <- Order{sm.State.Floor, OrderCallCommand, false}
+			if IsOrderAtFloor(sm.Elevator) {
+				sm.OrdersEvents.Order <- Order{sm.Elevator.State.Floor, OrderCallUp, false}
+				sm.OrdersEvents.Order <- Order{sm.Elevator.State.Floor, OrderCallDown, false}
+				sm.OrdersEvents.Order <- Order{sm.Elevator.State.Floor, OrderCallCommand, false}
 				sm.DoorTimerResetCh <- true
 				sm.DriverEvents.DoorOpen <- true
-				sm.State.Behaviour = ElevatorBehaviourDoorOpen
-				sm.OrdersEvents.State <- sm.State
+				sm.Elevator.State.Behaviour = ElevatorBehaviourDoorOpen
+				sm.OrdersEvents.State <- sm.Elevator.State
 
 			} else {
-				sm.State.Direction = GetDirection(sm.Orders, sm.State.Floor, sm.State.Direction)
-				if sm.State.Direction == DirnStop {
-					sm.State.Behaviour = ElevatorBehaviourIdle
+				sm.Elevator.State.Direction = GetDirection(sm.Elevator)
+				if sm.Elevator.State.Direction == DirnStop {
+					sm.Elevator.State.Behaviour = ElevatorBehaviourIdle
 				} else {
-					sm.State.Behaviour = ElevatorBehaviourMoving
+					sm.Elevator.State.Behaviour = ElevatorBehaviourMoving
 				}
-				sm.OrdersEvents.State <- sm.State
-				sm.DriverEvents.MotorDirection <- sm.State.Direction
+				sm.OrdersEvents.State <- sm.Elevator.State
+				sm.DriverEvents.MotorDirection <- sm.Elevator.State.Direction
 			}
 		}
 	}
@@ -133,27 +132,27 @@ func (sm *StateMachine) OnGlobalOrdersUpdated(globalOrders Orders) {
 }
 
 func (sm *StateMachine) OnDoorTimerTimeout() {
-	switch sm.State.Behaviour {
+	switch sm.Elevator.State.Behaviour {
 	case ElevatorBehaviourDoorOpen:
-		if sm.State.Active {
-			sm.State.Direction = GetDirection(sm.Orders, sm.State.Floor, sm.State.Direction)
-			if sm.State.Direction == DirnStop {
-				sm.State.Behaviour = ElevatorBehaviourIdle
+		if sm.Elevator.State.Active {
+			sm.Elevator.State.Direction = GetDirection(sm.Elevator)
+			if sm.Elevator.State.Direction == DirnStop {
+				sm.Elevator.State.Behaviour = ElevatorBehaviourIdle
 			} else {
-				sm.State.Behaviour = ElevatorBehaviourMoving
+				sm.Elevator.State.Behaviour = ElevatorBehaviourMoving
 			}
-			sm.OrdersEvents.State <- sm.State
-			sm.DriverEvents.MotorDirection <- sm.State.Direction
+			sm.OrdersEvents.State <- sm.Elevator.State
+			sm.DriverEvents.MotorDirection <- sm.Elevator.State.Direction
 			sm.DriverEvents.DoorOpen <- false
 		}
 	}
 }
 
 func (sm *StateMachine) OnErrorTimerTimeout() {
-	if sm.State.Active {
-		sm.State.Active = false
+	if sm.Elevator.State.Active {
+		sm.Elevator.State.Active = false
 		sm.DriverEvents.MotorDirection <- DirnStop
 		sm.DriverEvents.Light <- LightEvent{LightTypeStop, 0, true}
-		sm.OrdersEvents.State <- sm.State
+		sm.OrdersEvents.State <- sm.Elevator.State
 	}
 }
