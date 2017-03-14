@@ -35,16 +35,19 @@ func WriteToBackup(o Orders){
 
 func ReadFromBackup(file string) Orders{
 
+
+
 	filename, errOpen := os.Open(file)
+	var o Orders
 	if errOpen != nil {
 		fmt.Println("No file to read from, creating file...")
 		_, _ = os.Create(file)
-		return true, decoded_client
+		return o
 	}
 
 	data := make([]byte, 1024)
 	n, errRead := filename.Read(data)
-	if errREad != nil {
+	if errRead != nil {
 		fmt.Println("Error reading from file")
 		fmt.Println(errRead)
 	}
