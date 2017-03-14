@@ -13,8 +13,10 @@ type StateMachine struct {
 	TxOrderAckCh chan OrderAck
 
 	Buffer Buffer
-	messageId int
-	elevators Elevators
+	StateAcks map[string]bool
+	OrderAcks map[string]bool
+	MessageId int
+	Elevators Elevators
 }
 
 
@@ -28,71 +30,105 @@ func NewStateMachine(id string, ordersEvents OrdersNetworkEvents, txStateMessage
 	sm.TxOrderAckCh = txOrderAckCh
 
 	sm.Buffer = NewBuffer()
-	sm.messageId = 0
-	sm.elevators = make(Elevators)
+	sm.StateAcks = make(map[string]bool)
+	sm.OrderAcks = make(map[string]bool)
+	sm.MessageId = 0
+	sm.Elevators = make(Elevators)
 	return sm
 }
 
-func (sm *StateMachine) OnStateEventTransmit(stateEvent StateEvent) {
-	sm.Buffer.EnqueueStateMessage(StateMessage{sm.id, sm.id+string(sm.messageId), stateEvent})
-	sm.messageId++
+func (this *StateMachine) OnStateEventTransmit(stateEvent StateEvent) {
+	this.Buffer.EnqueueStateMessage(StateMessage{this.id, this.id+string(this.MessageId), stateEvent})
+	this.MessageId++
 }
 
-func (sm *StateMachine) OnOrderEventTransmit(orderEvent OrderEvent) {
-	sm.Buffer.EnqueueOrderMessage(OrderMessage{sm.id, sm.id+string(sm.messageId), orderEvent})
-	sm.messageId++
+func (this *StateMachine) OnOrderEventTransmit(orderEvent OrderEvent) {
+	this.Buffer.EnqueueOrderMessage(OrderMessage{this.id, this.id+string(this.MessageId), orderEvent})
+	this.MessageId++
 }
 
-func (sm *StateMachine) OnStateMessageReceived(stateMessage StateMessage) {
-	sm.OrdersEvents.RxStateEvent <-stateMessage.StateEvent
-	sm.TxStateAckCh <-StateAck{sm.id, stateMessage.Id}
+func (this *StateMachine) OnStateMessageReceived(stateMessage StateMessage) {
+	this.OrdersEvents.RxStateEvent <-stateMessage.StateEvent
+	this.TxStateAckCh <-StateAck{this.id, stateMessage.Id}
 }
 
-func (sm *StateMachine) OnOrderMessageReceived(orderMessage OrderMessage) {
-	sm.OrdersEvents.RxOrderEvent <-orderMessage.OrderEvent
-	sm.TxOrderAckCh <-OrderAck{sm.id, orderMessage.Id}
+func (this *StateMachine) OnOrderMessageReceived(orderMessage OrderMessage) {
+	this.OrdersEvents.RxOrderEvent <-orderMessage.OrderEvent
+	this.TxOrderAckCh <-OrderAck{this.id, orderMessage.Id}
 }
 
-func (sm *StateMachine) OnStateAckReceived(stateAck StateAck) {
-	if stateAck.Id == sm.Buffer.TopStateMessage().Id {
-		sm.Buffer.DequeueStateMessage()
+func (this *StateMachine) OnStateAckReceived(stateAck StateAck) {
+	if stateAck.Id == this.Buffer.TopStateMessage().Id {
+		this.StateAcks[stateAck.Source] = true
 	}
 }
 
-func (sm *StateMachine) OnOrderAckReceived(orderAck OrderAck) {
-	if orderAck.Id == sm.Buffer.TopOrderMessage().Id {
-		sm.Buffer.DequeueOrderMessage()
+func (this *StateMachine) OnOrderAckReceived(orderAck OrderAck) {
+	if orderAck.Id == this.Buffer.TopOrderMessage().Id {
+		this.OrderAcks[orderAck.Source] = true
 	}
 }
 
-func (sm *StateMachine) OnPeerNew(peer string) {
-	sm.OrdersEvents.ElevatorNew <-peer
-	sm.Buffer.EnqueueStateMessage(StateMessage{sm.id, sm.id+string(sm.messageId), StateEvent{sm.id, sm.elevators[sm.id].State}})
-	sm.messageId++
-	// Merge
-	for f,_ := range sm.elevators[sm.id].Orders {
-		for t,_ := range sm.elevators[sm.id].Orders[f] {
-			if sm.elevators[sm.id].Orders[f][t] {
-				sm.Buffer.EnqueueOrderMessage(OrderMessage{sm.id, sm.id+string(sm.messageId), OrderEvent{sm.id, Order{f,OrderType(t), true}}})
-				sm.messageId++
+func (this *StateMachine) OnPeerNew(peer string) {
+	this.OrdersEvents.ElevatorNew <-peer
+	this.Buffer.EnqueueStateMessage(StateMessage{this.id, this.id+string(this.MessageId), StateEvent{this.id, this.Elevators[this.id].State}})
+	this.MessageId++
+	for f,_ := range this.Elevators[this.id].Orders {
+		for t,_ := range this.Elevators[this.id].Orders[f] {
+			if this.Elevators[this.id].Orders[f][t] {
+				this.Buffer.EnqueueOrderMessage(OrderMessage{this.id, this.id+string(this.MessageId), OrderEvent{this.id, Order{f,OrderType(t), true}}})
+				this.MessageId++
 			}
 		}
 	}
 }
 
-func (sm *StateMachine) OnPeerLost(peer string) {
-	sm.OrdersEvents.ElevatorLost <-peer
+func (this *StateMachine) OnPeerLost(peer string) {
+	this.OrdersEvents.ElevatorLost <-peer
 }
 
-func (sm *StateMachine) OnElevatorsUpdated(elevators Elevators) {
-	sm.elevators = elevators
+func (this *StateMachine) OnElevatorsUpdated(elevators Elevators) {
+	this.Elevators = elevators
 }
 
-func (sm *StateMachine) OnInterval() {
-	if sm.Buffer.HasStateMessage() {
-		sm.TxStateMessageCh <- sm.Buffer.TopStateMessage()
+func (this *StateMachine) OnInterval() {
+	if this.Buffer.HasStateMessage() {
+		dequeueState := true
+		for e,_ := range this.Elevators {
+			if this.id == e {
+				continue
+			}
+			_, ok := this.StateAcks[e]
+	        if !ok {
+	        	dequeueState = false
+	        	break
+	        }
+		}
+		if dequeueState {
+			this.Buffer.DequeueStateMessage()
+			this.StateAcks = make(map[string]bool)
+		} else {
+			this.TxStateMessageCh <- this.Buffer.TopStateMessage()
+		}
 	}
-	if sm.Buffer.HasOrderMessage() {
-		sm.TxOrderMessageCh <- sm.Buffer.TopOrderMessage()
+	
+	if this.Buffer.HasOrderMessage() {
+		dequeueOrder := true
+		for e,_ := range this.Elevators {
+			if this.id == e {
+				continue
+			}
+			_, ok := this.OrderAcks[e]
+	        if !ok {
+	        	dequeueOrder = false
+	        	break
+	        }
+		}
+		if dequeueOrder {
+			this.Buffer.DequeueOrderMessage()
+			this.OrderAcks = make(map[string]bool)
+		} else {
+			this.TxOrderMessageCh <- this.Buffer.TopOrderMessage()
+		}
 	}
 }

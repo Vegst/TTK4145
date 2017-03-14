@@ -12,11 +12,11 @@ func EventManager(elevatorEvents def.DriverElevatorEvents) {
 	var lastButtonState [NumFloors][NumButtons]bool
 	for f := 0; f < NumFloors; f++ {
 		for b := 0; b < NumButtons; b++ {
-			lastButtonState[f][b] = GetButtonSignal(def.ButtonType(b), f)
+			lastButtonState[f][b] = false
 		}
 	}
 
-	lastStopState := GetStopSignal()
+	lastStopState := false
 	lastFloorState := -1//GetFloorSignal()
 
 	var buttonState bool
