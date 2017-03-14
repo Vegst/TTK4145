@@ -1,27 +1,17 @@
 package def
 
-
 // EventManager
+type Button struct {
+	Floor int
+	Type ButtonType
+}
 
 type ButtonEvent struct {
 	Button Button
 	State  bool
 }
 
-
-type Button struct {
-	Floor int
-	Type ButtonType
-}
-
 type LightType int
-
-const (
-	LightTypeUp      = 0
-	LightTypeDown    = 1
-	LightTypeCommand = 2
-	LightTypeStop    = 3
-)
 
 type LightEvent struct {
 	LightType LightType
@@ -36,47 +26,14 @@ type Order struct {
 	Flag  bool
 }
 
-type OrderEvent struct {
-	Target string
-	Order Order
-}
-type StateEvent struct {
-	Target string
-	State ElevatorState
-}
-
 type Orders [NumFloors][NumTypes]bool
 
-const (
-	NumFloors = 4
-	NumTypes  = 3
-)
-
-//const NumElevators = 3
 
 type OrderType int
-
-const (
-	OrderCallUp      OrderType = 0
-	OrderCallDown    OrderType = 1
-	OrderCallCommand OrderType = 2
-)
 
 // Elevator
 type ElevatorBehaviour int
 
-const (
-	ElevatorBehaviourIdle     = 0
-	ElevatorBehaviourMoving   = 1
-	ElevatorBehaviourDoorOpen = 2
-)
-
-type Elevators map[string]Elevator
-
-type Elevator struct {
-	State  ElevatorState
-	Orders Orders
-}
 type ElevatorState struct {
 	Active	  bool
 	Floor     int
@@ -84,23 +41,17 @@ type ElevatorState struct {
 	Behaviour ElevatorBehaviour
 }
 
+type Elevator struct {
+	State  ElevatorState
+	Orders Orders
+}
+
+type Elevators map[string]Elevator
+
 // Driver
 type MotorDirection int
 
-const (
-	DirnDown MotorDirection = -1
-	DirnStop MotorDirection = 0
-	DirnUp   MotorDirection = 1
-)
-
 type ButtonType int
-
-const (
-	ButtonCallUp      ButtonType = 0
-	ButtonCallDown    ButtonType = 1
-	ButtonCallCommand ButtonType = 2
-)
-
 
 type DriverElevatorEvents struct {
 	Button chan ButtonEvent
@@ -110,6 +61,17 @@ type DriverElevatorEvents struct {
 	Floor chan int
 	DoorOpen chan bool
 	FloorIndicator chan int
+}
+
+//Network
+type OrderEvent struct {
+	Target string
+	Order Order
+}
+
+type StateEvent struct {
+	Target string
+	State ElevatorState
 }
 
 type ElevatorOrdersEvents struct {
@@ -129,12 +91,15 @@ type OrdersNetworkEvents struct {
 	Elevators chan Elevators
 }
 
+type MessageElevator struct {
+	Id string
+	Elevator Elevator
+}
+
+//GUI
 type OrdersGuiEvents struct {
 	Elevators chan Elevators
 }
 
 
-type MessageElevator struct {
-	Id string
-	Elevator Elevator
-}
+
