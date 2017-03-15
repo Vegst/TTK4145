@@ -1,6 +1,6 @@
 package def
 
-import(
+import (
 	"time"
 )
 
@@ -8,8 +8,8 @@ const (
 	NumFloors = 4
 	NumTypes  = 3
 
-	TravelTime = 2000*time.Millisecond
-	DoorOpenTime = 3000*time.Millisecond
+	TravelTime   = 2000 * time.Millisecond
+	DoorOpenTime = 3000 * time.Millisecond
 
 	DirnDown MotorDirection = -1
 	DirnStop MotorDirection = 0
@@ -31,4 +31,6 @@ const (
 	ElevatorBehaviourIdle     = 0
 	ElevatorBehaviourMoving   = 1
 	ElevatorBehaviourDoorOpen = 2
+
+	BackupFile = "backup/backups/data.json"
 )

@@ -1,15 +1,16 @@
 package orders
 
 import (
+	"../backup"
 	. "../def"
 	"../misc"
 )
 
 type StateMachine struct {
-	Id string
+	Id             string
 	ElevatorEvents ElevatorOrdersEvents
-	NetworkEvents OrdersNetworkEvents
-	GuiEvents OrdersGuiEvents
+	NetworkEvents  OrdersNetworkEvents
+	GuiEvents      OrdersGuiEvents
 
 	Elevators Elevators
 }
@@ -21,6 +22,9 @@ func NewStateMachine(id string, elevatorEvents ElevatorOrdersEvents, networkEven
 	sm.NetworkEvents = networkEvents
 	sm.GuiEvents = guiEvents
 	sm.Elevators = make(Elevators)
+	elevator := sm.Elevators[id]
+	elevator.Orders = backup.ReadFromBackup(BackupFile)
+	sm.Elevators[id] = elevator
 	return sm
 }
 
@@ -44,6 +48,7 @@ func (this *StateMachine) OnOrderReceived(order Order) {
 		this.ElevatorEvents.LocalOrders <- this.Elevators[this.Id].Orders
 	}
 	this.ElevatorEvents.GlobalOrders <- misc.GlobalOrders(this.Elevators)
+	backup.WriteToBackup(BackupFile, elev.Orders)
 }
 
 func (this *StateMachine) OnStateReceived(state ElevatorState) {
@@ -78,20 +83,20 @@ func (this *StateMachine) OnStateReceived(state ElevatorState) {
 
 func (this *StateMachine) OnElevatorNew(id string) {
 	this.Elevators[id] = Elevator{
-		State: ElevatorState{Floor: -1, Direction: DirnUp, Behaviour: ElevatorBehaviourMoving},
+		State:  ElevatorState{Floor: -1, Direction: DirnUp, Behaviour: ElevatorBehaviourMoving},
 		Orders: Orders{{}},
 	}
-	this.GuiEvents.Elevators <-misc.CopyElevators(this.Elevators)
+	this.GuiEvents.Elevators <- misc.CopyElevators(this.Elevators)
 	this.NetworkEvents.Elevators <- misc.CopyElevators(this.Elevators)
 }
 
 func (this *StateMachine) OnElevatorLost(id string) {
 	lostOrders := misc.CopyOrders(this.Elevators[id].Orders)
 	delete(this.Elevators, id)
-	for f,_ := range lostOrders {
-		for t,_ := range []OrderType{OrderCallDown, OrderCallUp} {
+	for f, _ := range lostOrders {
+		for t, _ := range []OrderType{OrderCallDown, OrderCallUp} {
 			if lostOrders[f][t] {
-				lostOrder := Order{f,OrderType(t),true}
+				lostOrder := Order{f, OrderType(t), true}
 				assignedId := OrderAssigner(this.Id, lostOrder, this.Elevators)
 				elev := this.Elevators[assignedId]
 				elev.Orders[f][t] = true
@@ -106,7 +111,7 @@ func (this *StateMachine) OnElevatorLost(id string) {
 		}
 	}
 
-	this.GuiEvents.Elevators <-misc.CopyElevators(this.Elevators)
+	this.GuiEvents.Elevators <- misc.CopyElevators(this.Elevators)
 	this.NetworkEvents.Elevators <- misc.CopyElevators(this.Elevators)
 }
 
