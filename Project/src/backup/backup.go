@@ -1,20 +1,18 @@
-package orders
+package backup
 
 import (
 	. "../def"
 	"encoding/json"
-	"io/ioutil"
-	"os"
-	"log"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
 )
 
+func WriteToBackup(file string, orders Orders) {
+	ordersJson, errEncode := json.Marshal(orders)
 
-
-func WriteToBackup(file string, o Orders){
-    ordersJson, errEncode := json.Marshal(o)
-
-    if errEncode != nil {
+	if errEncode != nil {
 		fmt.Println("error encoding json: ", errEncode)
 	}
 
@@ -31,13 +29,15 @@ func WriteToBackup(file string, o Orders){
 	}
 }
 
-func ReadFromBackup(file string) Orders{
+func ReadFromBackup(file string) Orders {
+	var orders Orders
 	filename, errOpen := os.Open(file)
-	var o Orders
 	if errOpen != nil {
 		fmt.Println("No file to read from, creating file...")
 		_, _ = os.Create(file)
-		return o
+		orders = generateEmptyOrders(file)
+		WriteToBackup(file, orders)
+		return orders
 	}
 
 	data := make([]byte, 1024)
@@ -47,9 +47,20 @@ func ReadFromBackup(file string) Orders{
 		fmt.Println(errRead)
 	}
 
-	errDecode := json.Unmarshal(data[:n], &o)
+	errDecode := json.Unmarshal(data[:n], &orders)
 	if errDecode != nil {
 		fmt.Println("Error decoding orders from backup")
 	}
-	return o
+	return orders
+
+}
+
+func generateEmptyOrders(file string) Orders {
+	var emptyOrders Orders
+	for f := 0; f < NumFloors; f++ {
+		for b := 0; b < NumTypes; b++ {
+			emptyOrders[f][b] = false
+		}
+	}
+	return emptyOrders
 }

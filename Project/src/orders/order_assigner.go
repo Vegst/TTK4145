@@ -2,18 +2,17 @@ package orders
 
 import (
 	. "../def"
-	"time"
-	"math"
-	//"math/rand"
 	"../elevator"
 	"../misc"
+	"math"
+	"time"
 )
 
-func numOrdersBelowToFloor(e Elevator, floor int) int{
+func numOrdersBelowToFloor(elev Elevator, floor int) int {
 	numOrders := 0
-	for f := floor; f < e.State.Floor; f++{
-		for o := 0; 0 < NumTypes; o++{
-			if e.Orders[f][o] {
+	for f := floor; f < elev.State.Floor; f++ {
+		for o := 0; 0 < NumTypes; o++ {
+			if elev.Orders[f][o] {
 				numOrders += 1
 			}
 			break
@@ -22,11 +21,11 @@ func numOrdersBelowToFloor(e Elevator, floor int) int{
 	return numOrders
 }
 
-func numOrdersAboveToFloor(e Elevator, floor int) int{
+func numOrdersAboveToFloor(elev Elevator, floor int) int {
 	numOrders := 0
-	for f := e.State.Floor; f < floor; f++{
-		for o := 0; 0 < NumTypes; o++{
-			if e.Orders[f][o] {
+	for f := elev.State.Floor; f < floor; f++ {
+		for o := 0; 0 < NumTypes; o++ {
+			if elev.Orders[f][o] {
 				numOrders += 1
 			}
 			break
@@ -39,56 +38,49 @@ func CalculateCost(order Order, elev Elevator) time.Duration {
 	e := misc.CopyElevator(elev)
 	e.Orders[order.Floor][order.Type] = order.Flag
 
-    dur := 0*time.Millisecond
-        
-    switch e.State.Behaviour {
-    case ElevatorBehaviourIdle:
-        e.State.Direction = elevator.GetDirection(e)
-        if e.State.Direction == DirnStop {
-        	return dur
-        }
-    case ElevatorBehaviourMoving:
-        e.State.Floor = e.State.Floor + int(e.State.Direction)
-        dur += TravelTime/2
-    case ElevatorBehaviourDoorOpen:
-        dur -= DoorOpenTime/2
-    }
+	dur := 0 * time.Millisecond
 
-    for {
-        if elevator.ShouldStop(e) {
-        	if elevator.IsOrderAtFloor(e) {
-	            e = elevator.ClearOrdersAtCurrentFloor(e)
-            	dur += DoorOpenTime
-	        } else {
-	        	return dur
-	        }
-            e.State.Direction = elevator.GetDirection(e)
-        }
-        e.State.Floor = e.State.Floor + int(e.State.Direction)
-        dur += TravelTime
-    }
+	switch e.State.Behaviour {
+	case ElevatorBehaviourIdle:
+		e.State.Direction = elevator.GetDirection(e)
+		if e.State.Direction == DirnStop {
+			return dur
+		}
+	case ElevatorBehaviourMoving:
+		e.State.Floor = e.State.Floor + int(e.State.Direction)
+		dur += TravelTime / 2
+	case ElevatorBehaviourDoorOpen:
+		dur -= DoorOpenTime / 2
+	}
+
+	for {
+		if elevator.ShouldStop(e) {
+			if elevator.IsOrderAtFloor(e) {
+				e = elevator.ClearOrdersAtCurrentFloor(e)
+				dur += DoorOpenTime
+			} else {
+				return dur
+			}
+			e.State.Direction = elevator.GetDirection(e)
+		}
+		e.State.Floor = e.State.Floor + int(e.State.Direction)
+		dur += TravelTime
+	}
 }
 
-func OrderAssigner(id string, o Order, elevs Elevators) string {
-	if o.Type == OrderCallCommand {
+func OrderAssigner(id string, order Order, elevs Elevators) string {
+	if order.Type == OrderCallCommand {
 		return id
 	}
 	var assignedId string = id
 	eDur := math.Inf(1)
 	for k := range elevs {
-		iDur := float64(CalculateCost(o, elevs[k]))
+		iDur := float64(CalculateCost(order, elevs[k]))
 		if iDur < eDur {
 			assignedId = k
 			eDur = iDur
 		}
 	}
-	/*
-	ids := make([]string, 0)
-	for id,_ := range elevs {
-		ids = append(ids, id)
-	}
-	rand.Seed(time.Now().UTC().UnixNano())
-	return ids[rand.Intn(len(ids))]
-	*/
+
 	return assignedId
 }
