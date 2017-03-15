@@ -108,7 +108,9 @@ func (this *StateMachine) OnInterval() {
 			this.Buffer.DequeueStateMessage()
 			this.StateAcks = make(map[string]bool)
 		} else {
-			this.TxStateMessageCh <- this.Buffer.TopStateMessage()
+			for i := 0; i < 5; i++ {
+				this.TxStateMessageCh <- this.Buffer.TopStateMessage()
+			}
 		}
 	}
 	
@@ -128,7 +130,9 @@ func (this *StateMachine) OnInterval() {
 			this.Buffer.DequeueOrderMessage()
 			this.OrderAcks = make(map[string]bool)
 		} else {
-			this.TxOrderMessageCh <- this.Buffer.TopOrderMessage()
+			for i := 0; i < 5; i++ {
+				this.TxOrderMessageCh <- this.Buffer.TopOrderMessage()
+			}
 		}
 	}
 }

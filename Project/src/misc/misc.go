@@ -13,10 +13,17 @@ func B2I(b bool) int {
 
 func CopyElevators(elevators Elevators) Elevators {
 	newElevators := make(Elevators)
-	for k,v := range elevators {
-		newElevators[k] = v
+	for id,e := range elevators {
+		newElevators[id] = CopyElevator(e)
 	}
 	return newElevators
+}
+
+func CopyElevator(elevator Elevator) Elevator {
+	var newElevator Elevator
+	newElevator.State = ElevatorState(elevator.State)
+	newElevator.Orders = CopyOrders(elevator.Orders)
+	return newElevator
 }
 
 func CopyOrders(orders Orders) Orders {

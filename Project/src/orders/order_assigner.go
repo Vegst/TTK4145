@@ -3,13 +3,13 @@ package orders
 import (
 	. "../def"
 	"time"
-	"math"
+	//"math"
+	"math/rand"
 	"../elevator"
+	"../misc"
 )
 
 func CalculateCost(o Order, e Elevator) time.Duration {
-
-	e.Orders[o.Floor][o.Type] = o.Flag
 
     dur := 0*time.Millisecond
     
@@ -44,6 +44,7 @@ func OrderAssigner(id string, o Order, elevs Elevators) string {
 	if o.Type == OrderCallCommand {
 		return id
 	}
+	/*
 	var assignedId string = id
 	eDur := math.Inf(1)
 	for k := range elevs {
@@ -53,5 +54,12 @@ func OrderAssigner(id string, o Order, elevs Elevators) string {
 			eDur = iDur
 		}
 	}
-	return assignedId
+	*/
+	ids := make([]string, 0)
+	for id,_ := range elevs {
+		ids = append(ids, id)
+	}
+	rand.Seed(time.Now().UTC().UnixNano())
+	return ids[rand.Intn(len(ids))]
+	//return assignedId
 }

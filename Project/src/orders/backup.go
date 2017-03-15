@@ -11,22 +11,20 @@ import (
 
 
 
-func WriteToBackup(o Orders){
+func WriteToBackup(file string, o Orders){
     ordersJson, errEncode := json.Marshal(o)
 
     if errEncode != nil {
 		fmt.Println("error encoding json: ", errEncode)
 	}
 
-	filename := "orders/backups/data"
-
-	_, errOpen := os.Open(filename)
+	_, errOpen := os.Open(file)
 	if errOpen != nil {
 		fmt.Println("No file to write to, creating file...")
-		_, _ = os.Create(filename)
+		_, _ = os.Create(file)
 	}
 
-	errWrite := ioutil.WriteFile(filename, ordersJson, 0644)
+	errWrite := ioutil.WriteFile(file, ordersJson, 0644)
 	if errWrite != nil {
 		fmt.Println("Error writing to file")
 		log.Fatal(errWrite)
@@ -34,9 +32,6 @@ func WriteToBackup(o Orders){
 }
 
 func ReadFromBackup(file string) Orders{
-
-
-
 	filename, errOpen := os.Open(file)
 	var o Orders
 	if errOpen != nil {

@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const interval = 15 * time.Millisecond
+const interval = 10 * time.Millisecond
 
 type OrderMessage struct {
 	Source string
