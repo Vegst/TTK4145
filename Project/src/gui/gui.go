@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sort"
 	"time"
-    "sort"
 )
 
 func clearTerminal() {
@@ -15,37 +15,37 @@ func clearTerminal() {
 	c.Run()
 }
 
-func sortElevators(elevators Elevators) []string {
-    mk := make([]string, len(elevators))
-    i := 0
-    for k, _ := range elevators {
-        mk[i] = k
-        i++
-    }
-    sort.Strings(mk)
-    return mk
+func sortElevators(elevs Elevators) []string {
+	mk := make([]string, len(elevs))
+	i := 0
+	for k, _ := range elevs {
+		mk[i] = k
+		i++
+	}
+	sort.Strings(mk)
+	return mk
 }
 
-func print(id string, elevators Elevators) {
-	for _,e := range sortElevators(elevators) {
-		if e == id {
-			fmt.Println("ELEVATOR", e, "(this)")
+func print(id string, elevs Elevators) {
+	for _, elev := range sortElevators(elevs) {
+		if elev == id {
+			fmt.Println("ELEVATOR", elev, "(this)")
 		} else {
-			fmt.Println("ELEVATOR", e)
+			fmt.Println("ELEVATOR", elev)
 		}
 		fmt.Println("Floor	State		Up	Down	Command")
-		for f := len(elevators[e].Orders)-1; f >= 0; f-- {
+		for f := len(elevs[elev].Orders) - 1; f >= 0; f-- {
 			fmt.Print(f, "	")
-			
-			if f == len(elevators[e].Orders)-1 && elevators[e].State.Floor < 0 {
+
+			if f == len(elevs[elev].Orders)-1 && elevs[elev].State.Floor < 0 {
 				fmt.Print("U	")
-			} else if f == elevators[e].State.Floor {
-				if elevators[e].State.Active {
+			} else if f == elevs[elev].State.Floor {
+				if elevs[elev].State.Active {
 					fmt.Print("(A) ")
 				} else {
 					fmt.Print("(I) ")
 				}
-				switch elevators[e].State.Direction {
+				switch elevs[elev].State.Direction {
 				case DirnUp:
 					fmt.Print("ˆ ")
 				case DirnDown:
@@ -53,7 +53,7 @@ func print(id string, elevators Elevators) {
 				case DirnStop:
 					fmt.Print("  ")
 				}
-				switch elevators[e].State.Behaviour {
+				switch elevs[elev].State.Behaviour {
 				case ElevatorBehaviourIdle:
 					fmt.Print(" []")
 				case ElevatorBehaviourMoving:
@@ -64,9 +64,9 @@ func print(id string, elevators Elevators) {
 			} else {
 				fmt.Print("	")
 			}
-			for t, order := range elevators[e].Orders[f] {
+			for t, order := range elevs[elev].Orders[f] {
 				fmt.Print("	")
-				if f == len(elevators[e].Orders)-1 && t == int(OrderCallUp) {
+				if f == len(elevs[elev].Orders)-1 && t == int(OrderCallUp) {
 					continue
 				}
 				if f == 0 && t == int(OrderCallDown) {
@@ -85,15 +85,15 @@ func print(id string, elevators Elevators) {
 }
 
 func ElevatorVisualizer(id string, ordersEvents OrdersGuiEvents) {
-	elevators := make(Elevators)
+	elevs := make(Elevators)
 	clearTerminal()
-	print(id, elevators)
+	print(id, elevs)
 
 	for {
 		select {
-		case elevators = <-ordersEvents.Elevators:
+		case elevs = <-ordersEvents.Elevators:
 			clearTerminal()
-			print(id, elevators)
+			print(id, elevs)
 		case <-time.After(100 * time.Millisecond):
 		}
 	}

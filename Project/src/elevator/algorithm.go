@@ -4,50 +4,51 @@ import (
 	. "../def"
 )
 
-func IsOrderAtFloor(e Elevator) bool {
-	for o := 0; o < NumTypes; o++{
-		if(e.Orders[e.State.Floor][o]){
+func IsOrderAtFloor(elev Elevator) bool {
+	for o := 0; o < NumTypes; o++ {
+		if elev.Orders[elev.State.Floor][o] {
 			return true
 		}
 	}
 	return false
 }
 
-func GetDirection(e Elevator) MotorDirection{
-	switch(e.State.Direction) {
+func GetDirection(elev Elevator) MotorDirection {
+	switch elev.State.Direction {
 	case DirnUp:
-		if(checkAbove(e)) {
+		if checkAbove(elev) {
 			return DirnUp
-		} else if(checkBelow(e)) {
+		} else if checkBelow(elev) {
 			return DirnDown
-		} else{
+		} else {
 			return DirnStop
 		}
 	case DirnStop, DirnDown:
-		if(checkBelow(e)) {
+		if checkBelow(elev) {
 			return DirnDown
-		} else if(checkAbove(e)) {
+		} else if checkAbove(elev) {
 			return DirnUp
-		} else{
+		} else {
 			return DirnStop
-		}	
+		}
 	}
 	return DirnStop
 }
 
-func ShouldStop(e Elevator) bool{
-	switch(e.State.Direction) {
+func ShouldStop(elev Elevator) bool {
+	switch elev.State.Direction {
 	case DirnDown:
-		return 	e.Orders[e.State.Floor][OrderCallCommand] ||
-				e.Orders[e.State.Floor][OrderCallDown] ||
-				!checkBelow(e)
+		return elev.Orders[elev.State.Floor][OrderCallCommand] ||
+			elev.Orders[elev.State.Floor][OrderCallDown] ||
+			!checkBelow(elev)
 	case DirnUp:
-		return 	e.Orders[e.State.Floor][OrderCallCommand] ||
-				e.Orders[e.State.Floor][OrderCallUp] ||
-				!checkAbove(e) 	
+		return elev.Orders[elev.State.Floor][OrderCallCommand] ||
+			elev.Orders[elev.State.Floor][OrderCallUp] ||
+			!checkAbove(elev)
 	}
 	return true
 }
+
 /*
 func GetOrdersToClear(orders Orders, floor int, direction MotorDirection) {
 
@@ -59,10 +60,10 @@ func GetOrdersToClear(orders Orders, floor int, direction MotorDirection) {
 	sm.OrdersEvents.Order <- Order{sm.State.Floor, OrderCallCommand, false}
 }*/
 
-func checkAbove(e Elevator) bool{
-	for f := e.State.Floor+1; f < NumFloors; f++{
-		for o := 0; o < NumTypes; o++{
-			if(e.Orders[f][o]){
+func checkAbove(elev Elevator) bool {
+	for f := elev.State.Floor + 1; f < NumFloors; f++ {
+		for o := 0; o < NumTypes; o++ {
+			if elev.Orders[f][o] {
 				return true
 			}
 		}
@@ -70,10 +71,10 @@ func checkAbove(e Elevator) bool{
 	return false
 }
 
-func checkBelow(e Elevator) bool{
-	for f := 0; f < e.State.Floor; f++{
-		for o := 0; o < NumTypes; o++{
-			if(e.Orders[f][o]){
+func checkBelow(elev Elevator) bool {
+	for f := 0; f < elev.State.Floor; f++ {
+		for o := 0; o < NumTypes; o++ {
+			if elev.Orders[f][o] {
 				return true
 			}
 		}
@@ -81,24 +82,24 @@ func checkBelow(e Elevator) bool{
 	return false
 }
 
-func ClearOrdersAtCurrentFloor(e Elevator) Elevator {
-	e.Orders[e.State.Floor][ButtonCallCommand] = false
-	
-	switch(e.State.Direction){
+func ClearOrdersAtCurrentFloor(elev Elevator) Elevator {
+	elev.Orders[elev.State.Floor][ButtonCallCommand] = false
+
+	switch elev.State.Direction {
 	case DirnUp:
-		e.Orders[e.State.Floor][ButtonCallUp] = false
-		if(!checkAbove(e)){
-			e.Orders[e.State.Floor][ButtonCallDown] = false
+		elev.Orders[elev.State.Floor][ButtonCallUp] = false
+		if !checkAbove(elev) {
+			elev.Orders[elev.State.Floor][ButtonCallDown] = false
 		}
 	case DirnDown:
-		e.Orders[e.State.Floor][ButtonCallDown] = false
-		if(!checkBelow(e)){
-			e.Orders[e.State.Floor][ButtonCallUp] = false
+		elev.Orders[elev.State.Floor][ButtonCallDown] = false
+		if !checkBelow(elev) {
+			elev.Orders[elev.State.Floor][ButtonCallUp] = false
 		}
 	default:
-        e.Orders[e.State.Floor][ButtonCallUp] = false;
-        e.Orders[e.State.Floor][ButtonCallDown] = false;
+		elev.Orders[elev.State.Floor][ButtonCallUp] = false
+		elev.Orders[elev.State.Floor][ButtonCallDown] = false
 	}
 
-	return e
+	return elev
 }

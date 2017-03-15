@@ -1,7 +1,6 @@
 package elevator
 
 import (
-	"../backup"
 	. "../def"
 )
 
@@ -25,7 +24,6 @@ func NewStateMachine(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrd
 }
 
 func (this *StateMachine) OnInit() {
-	this.Elevator.Orders = backup.ReadFromBackup(BackupFile)
 	this.Elevator.State.Direction = DirnUp
 	this.Elevator.State.Behaviour = ElevatorBehaviourMoving
 	this.DriverEvents.MotorDirection <- DirnUp
