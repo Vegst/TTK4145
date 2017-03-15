@@ -28,7 +28,7 @@ func (this *StateMachine) OnInit() {
 	this.Elevator.State.Behaviour = ElevatorBehaviourMoving
 	this.DriverEvents.MotorDirection <- DirnUp
 	this.OrdersEvents.State <- this.Elevator.State
-	sm.ErrorTimerResetCh <- true
+	this.ErrorTimerResetCh <- true
 }
 
 func (this *StateMachine) OnButtonPressed(button Button) {
@@ -52,7 +52,7 @@ func (this *StateMachine) OnFloorReached(floor int) {
 	this.Elevator.State.Floor = floor
 	this.OrdersEvents.State <- this.Elevator.State
 	this.DriverEvents.FloorIndicator <- this.Elevator.State.Floor
-	sm.ErrorTimerResetCh <- true
+	this.ErrorTimerResetCh <- true
 
 	switch this.Elevator.State.Behaviour {
 	case ElevatorBehaviourMoving:
@@ -117,7 +117,7 @@ func (this *StateMachine) OnLocalOrdersUpdated(localOrders Orders) {
 				}
 				this.OrdersEvents.State <- this.Elevator.State
 				this.DriverEvents.MotorDirection <- this.Elevator.State.Direction
-				sm.ErrorTimerResetCh <- true
+				this.ErrorTimerResetCh <- true
 			}
 		}
 	}
@@ -143,13 +143,13 @@ func (this *StateMachine) OnDoorTimerTimeout() {
 			this.OrdersEvents.State <- this.Elevator.State
 			this.DriverEvents.MotorDirection <- this.Elevator.State.Direction
 			this.DriverEvents.DoorOpen <- false
-			sm.ErrorTimerResetCh <- true
+			this.ErrorTimerResetCh <- true
 		}
 	}
 }
 
 func (this *StateMachine) OnErrorTimerTimeout() {
-	switch sm.Elevator.State.Behaviour {
+	switch this.Elevator.State.Behaviour {
 	case ElevatorBehaviourMoving:
 		this.Elevator.State.Active = false
 		this.DriverEvents.MotorDirection <- DirnStop
