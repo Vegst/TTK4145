@@ -75,16 +75,16 @@ func CalculateCost(o Order, e Elevator) float64 {
 	for i := 0; i < NumFloors; i++ {
 		for j := 0; j < NumTypes; j++ {
 			if e.Orders[i][j] {
-				cost += 3
+				cost += 11
 			}
 			break
 		}
 	}
-
+	/*
 	if o.Floor < e.State.Floor && e.State.Direction == DirnUp ||
 		o.Floor > e.State.Floor && e.State.Direction == DirnDown {
 		cost += 20
-	}
+	}*/
 	return cost
 
 }
