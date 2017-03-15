@@ -41,12 +41,6 @@ func numOrdersAboveToFloor(e Elevator, floor int) int{
 func CalculateCost(order Order, elev Elevator) time.Duration {
 	e := misc.CopyElevator(elev)
 	e.Orders[order.Floor][order.Type] = order.Flag
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
 >>>>>>> Stashed changes
 
     dur := 0*time.Millisecond
