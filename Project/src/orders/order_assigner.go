@@ -35,6 +35,7 @@ func numOrdersAboveToFloor(elev Elevator, floor int) int {
 }
 
 func CalculateCost(order Order, elev Elevator) time.Duration {
+	/*
 	e := misc.CopyElevator(elev)
 	e.Orders[order.Floor][order.Type] = order.Flag
 
@@ -66,6 +67,26 @@ func CalculateCost(order Order, elev Elevator) time.Duration {
 		e.State.Floor = e.State.Floor + int(e.State.Direction)
 		dur += TravelTime
 	}
+	*/
+	cost := float64(0)
+	cost += math.Abs(float64((o.Floor - e.State.Floor) * 10))
+
+	//Adds cost for each f
+	for i := 0; i < NumFloors; i++ {
+		for j := 0; j < NumTypes; j++ {
+			if e.Orders[i][j] {
+				cost += 3
+			}
+			break
+		}
+	}
+
+	if o.Floor < e.State.Floor && e.State.Direction == DirnUp ||
+		o.Floor > e.State.Floor && e.State.Direction == DirnDown {
+		cost += 20
+	}
+	return cost
+
 }
 
 func OrderAssigner(id string, order Order, elevs Elevators) string {
