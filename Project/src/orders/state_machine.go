@@ -48,7 +48,7 @@ func (this *StateMachine) OnOrderReceived(order Order) {
 		this.ElevatorEvents.LocalOrders <- this.Elevators[this.Id].Orders
 	}
 	this.ElevatorEvents.GlobalOrders <- misc.GlobalOrders(this.Elevators)
-	backup.WriteToBackup(BackupFile, elev.Orders)
+	backup.WriteToBackup(BackupFile, this.Elevators[this.Id].Orders)
 }
 
 func (this *StateMachine) OnStateReceived(state ElevatorState) {
@@ -134,4 +134,5 @@ func (this *StateMachine) OnOrderEventReceived(orderEvent OrderEvent) {
 		this.ElevatorEvents.LocalOrders <- this.Elevators[this.Id].Orders
 	}
 	this.ElevatorEvents.GlobalOrders <- misc.GlobalOrders(this.Elevators)
+	backup.WriteToBackup(BackupFile, this.Elevators[this.Id].Orders)
 }

@@ -38,10 +38,8 @@ func main() {
 	} else {
 		driver.Init(driver.TypeSimulation, simulator)
 	}
-	// Initialize system
 
-	// See documentation for full communication structure between main goroutines
-
+	// Initialize channels and routines
 	driverElevatorEvents := DriverElevatorEvents{
 		Button:         make(chan ButtonEvent, 10),
 		Light:          make(chan LightEvent, 10),
