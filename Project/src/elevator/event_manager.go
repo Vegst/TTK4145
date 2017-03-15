@@ -14,9 +14,14 @@ func EventManager(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrders
 	doorTimerTimeoutCh := make(chan bool)
 	errorTimerResetCh := make(chan bool)
 	errorTimerTimeoutCh := make(chan bool)
+	setTimerResetCh := make(chan bool)
+	setTimerTimeoutCh := make(chan bool)
 
 	go timer.Timer(3*time.Second, doorTimerResetCh, doorTimerTimeoutCh)
 	go timer.Timer(5*time.Second, errorTimerResetCh, errorTimerTimeoutCh)
+	go timer.Timer(1*time.Second, setTimerResetCh, setTimerTimeoutCh)
+
+	setTimerResetCh <- true
 
 	//actuator := NewActuator(driverEvents, ordersEvents, doorTimerResetCh, errorTimerResetCh)
 	sm := NewStateMachine(driverEvents, ordersEvents, doorTimerResetCh, errorTimerResetCh)	
@@ -53,6 +58,9 @@ func EventManager(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrders
 
 		case <-errorTimerTimeoutCh:
 			sm.OnErrorTimerTimeout()
+
+		case <-setTimerTimeoutCh:
+			sm.OnSetTimerTimeout()
 
 		case <-time.After(interval):
 		}
