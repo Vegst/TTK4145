@@ -9,9 +9,6 @@ import (
 	"../misc"
 )
 
-<<<<<<< Updated upstream
-func CalculateCost(o Order, e Elevator) time.Duration {
-=======
 func numOrdersBelowToFloor(e Elevator, floor int) int{
 	numOrders := 0
 	for f := floor; f < e.State.Floor; f++{
@@ -41,7 +38,6 @@ func numOrdersAboveToFloor(e Elevator, floor int) int{
 func CalculateCost(order Order, elev Elevator) time.Duration {
 	e := misc.CopyElevator(elev)
 	e.Orders[order.Floor][order.Type] = order.Flag
->>>>>>> Stashed changes
 
     dur := 0*time.Millisecond
     
