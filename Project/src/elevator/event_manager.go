@@ -19,7 +19,7 @@ func EventManager(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrders
 
 	go timer.Timer(3*time.Second, doorTimerResetCh, doorTimerTimeoutCh)
 	go timer.Timer(5*time.Second, errorTimerResetCh, errorTimerTimeoutCh)
-	go timer.Timer(1*time.Second, setTimerResetCh, setTimerTimeoutCh)
+	go timer.Timer(5*time.Second, setTimerResetCh, setTimerTimeoutCh)
 
 	setTimerResetCh <- true
 
