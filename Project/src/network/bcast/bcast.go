@@ -12,7 +12,7 @@ import (
 )
 
 
-const PackageLoss = 0.15
+const PackageLoss = 0.0
 
 // Encodes received values from `chans` into type-tagged JSON, then broadcasts
 // it on `port`
