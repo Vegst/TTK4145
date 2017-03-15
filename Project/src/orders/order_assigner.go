@@ -3,13 +3,45 @@ package orders
 import (
 	. "../def"
 	"time"
-	"math"
+	//"math"
+	"math/rand"
 	"../elevator"
+	"../misc"
 )
 
+<<<<<<< Updated upstream
 func CalculateCost(o Order, e Elevator) time.Duration {
+=======
+func numOrdersBelowToFloor(e Elevator, floor int) int{
+	numOrders := 0
+	for f := floor; f < e.State.Floor; f++{
+		for o := 0; 0 < NumTypes; o++{
+			if e.Orders[f][o] {
+				numOrders += 1
+			}
+			break
+		}
+	}
+	return numOrders
+}
 
-	e.Orders[o.Floor][o.Type] = o.Flag
+func numOrdersAboveToFloor(e Elevator, floor int) int{
+	numOrders := 0
+	for f := e.State.Floor; f < floor; f++{
+		for o := 0; 0 < NumTypes; o++{
+			if e.Orders[f][o] {
+				numOrders += 1
+			}
+			break
+		}
+	}
+	return numOrders
+}
+
+func CalculateCost(order Order, elev Elevator) time.Duration {
+	e := misc.CopyElevator(elev)
+	e.Orders[order.Floor][order.Type] = order.Flag
+>>>>>>> Stashed changes
 
     dur := 0*time.Millisecond
     
@@ -44,6 +76,7 @@ func OrderAssigner(id string, o Order, elevs Elevators) string {
 	if o.Type == OrderCallCommand {
 		return id
 	}
+	/*
 	var assignedId string = id
 	eDur := math.Inf(1)
 	for k := range elevs {
@@ -53,5 +86,12 @@ func OrderAssigner(id string, o Order, elevs Elevators) string {
 			eDur = iDur
 		}
 	}
-	return assignedId
+	*/
+	ids := make([]string, 0)
+	for id,_ := range elevs {
+		ids = append(ids, id)
+	}
+	rand.Seed(time.Now().UTC().UnixNano())
+	return ids[rand.Intn(len(ids))]
+	//return assignedId
 }

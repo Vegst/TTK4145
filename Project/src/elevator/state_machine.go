@@ -22,7 +22,7 @@ func NewStateMachine(driverEvents DriverElevatorEvents, ordersEvents ElevatorOrd
 	sm.DoorTimerResetCh = doorTimerResetCh
 	sm.ErrorTimerResetCh = errorTimerResetCh
 	sm.Elevator.State = ElevatorState{Active: false, Floor: -1, Direction: DirnStop, Behaviour: ElevatorBehaviourIdle}
-	sm.Elevator.Orders= Orders{{}}
+	sm.Elevator.Orders = Orders{{}}
 	return sm
 }
 
