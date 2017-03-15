@@ -2,10 +2,10 @@ package orders
 
 import (
 	. "../def"
-	"../elevator"
-	"../misc"
+	//"../elevator"
+	//"../misc"
 	"math"
-	"time"
+	//"time"
 )
 
 func numOrdersBelowToFloor(elev Elevator, floor int) int {
@@ -34,7 +34,7 @@ func numOrdersAboveToFloor(elev Elevator, floor int) int {
 	return numOrders
 }
 
-func CalculateCost(order Order, elev Elevator) time.Duration {
+func CalculateCost(o Order, e Elevator) float64 {
 	/*
 	e := misc.CopyElevator(elev)
 	e.Orders[order.Floor][order.Type] = order.Flag
