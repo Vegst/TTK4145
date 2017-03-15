@@ -9,7 +9,45 @@ import (
 	"../misc"
 )
 
+<<<<<<< Updated upstream
 func CalculateCost(o Order, e Elevator) time.Duration {
+=======
+func numOrdersBelowToFloor(e Elevator, floor int) int{
+	numOrders := 0
+	for f := floor; f < e.State.Floor; f++{
+		for o := 0; 0 < NumTypes; o++{
+			if e.Orders[f][o] {
+				numOrders += 1
+			}
+			break
+		}
+	}
+	return numOrders
+}
+
+func numOrdersAboveToFloor(e Elevator, floor int) int{
+	numOrders := 0
+	for f := e.State.Floor; f < floor; f++{
+		for o := 0; 0 < NumTypes; o++{
+			if e.Orders[f][o] {
+				numOrders += 1
+			}
+			break
+		}
+	}
+	return numOrders
+}
+
+func CalculateCost(order Order, elev Elevator) time.Duration {
+	e := misc.CopyElevator(elev)
+	e.Orders[order.Floor][order.Type] = order.Flag
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 
     dur := 0*time.Millisecond
     
