@@ -3,8 +3,8 @@ package orders
 import (
 	. "../def"
 	"time"
-	//"math"
-	"math/rand"
+	"math"
+	//"math/rand"
 	"../elevator"
 	"../misc"
 )
@@ -40,7 +40,7 @@ func CalculateCost(order Order, elev Elevator) time.Duration {
 	e.Orders[order.Floor][order.Type] = order.Flag
 
     dur := 0*time.Millisecond
-    
+        
     switch e.State.Behaviour {
     case ElevatorBehaviourIdle:
         e.State.Direction = elevator.GetDirection(e)
@@ -53,15 +53,16 @@ func CalculateCost(order Order, elev Elevator) time.Duration {
     case ElevatorBehaviourDoorOpen:
         dur -= DoorOpenTime/2
     }
-    
+
     for {
         if elevator.ShouldStop(e) {
-            e = elevator.ClearOrdersAtCurrentFloor(e)
-            dur += DoorOpenTime
+        	if elevator.IsOrderAtFloor(e) {
+	            e = elevator.ClearOrdersAtCurrentFloor(e)
+            	dur += DoorOpenTime
+	        } else {
+	        	return dur
+	        }
             e.State.Direction = elevator.GetDirection(e)
-            if e.State.Direction == DirnStop{
-                return dur
-            }
         }
         e.State.Floor = e.State.Floor + int(e.State.Direction)
         dur += TravelTime
@@ -72,7 +73,6 @@ func OrderAssigner(id string, o Order, elevs Elevators) string {
 	if o.Type == OrderCallCommand {
 		return id
 	}
-	/*
 	var assignedId string = id
 	eDur := math.Inf(1)
 	for k := range elevs {
@@ -82,12 +82,13 @@ func OrderAssigner(id string, o Order, elevs Elevators) string {
 			eDur = iDur
 		}
 	}
-	*/
+	/*
 	ids := make([]string, 0)
 	for id,_ := range elevs {
 		ids = append(ids, id)
 	}
 	rand.Seed(time.Now().UTC().UnixNano())
 	return ids[rand.Intn(len(ids))]
-	//return assignedId
+	*/
+	return assignedId
 }

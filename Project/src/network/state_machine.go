@@ -58,14 +58,18 @@ func (this *StateMachine) OnOrderMessageReceived(orderMessage OrderMessage) {
 }
 
 func (this *StateMachine) OnStateAckReceived(stateAck StateAck) {
-	if stateAck.Id == this.Buffer.TopStateMessage().Id {
-		this.StateAcks[stateAck.Source] = true
+	if this.Buffer.HasStateMessage() {
+		if stateAck.Id == this.Buffer.TopStateMessage().Id {
+			this.StateAcks[stateAck.Source] = true
+		}
 	}
 }
 
 func (this *StateMachine) OnOrderAckReceived(orderAck OrderAck) {
-	if orderAck.Id == this.Buffer.TopOrderMessage().Id {
-		this.OrderAcks[orderAck.Source] = true
+	if this.Buffer.HasOrderMessage() {
+		if orderAck.Id == this.Buffer.TopOrderMessage().Id {
+			this.OrderAcks[orderAck.Source] = true
+		}
 	}
 }
 

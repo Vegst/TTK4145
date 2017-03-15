@@ -12,10 +12,10 @@ func OrderManager(id string, elevatorEvents ElevatorOrdersEvents, networkEvents 
 	for {
 		select {
 		case order := <-elevatorEvents.Order:
-			sm.OnOrderUpdated(order)
+			sm.OnOrderReceived(order)
 
 		case state := <-elevatorEvents.State:
-			sm.OnStateUpdated(state)
+			sm.OnStateReceived(state)
 
 		case newElevator := <-networkEvents.ElevatorNew:
 			sm.OnElevatorNew(newElevator)

@@ -82,19 +82,19 @@ func checkBelow(e Elevator) bool{
 }
 
 func ClearOrdersAtCurrentFloor(e Elevator) Elevator {
+	e.Orders[e.State.Floor][ButtonCallCommand] = false
+	
 	switch(e.State.Direction){
 	case DirnUp:
 		e.Orders[e.State.Floor][ButtonCallUp] = false
 		if(!checkAbove(e)){
 			e.Orders[e.State.Floor][ButtonCallDown] = false
 		}
-		break
 	case DirnDown:
 		e.Orders[e.State.Floor][ButtonCallDown] = false
 		if(!checkBelow(e)){
 			e.Orders[e.State.Floor][ButtonCallUp] = false
 		}
-		break
 	default:
         e.Orders[e.State.Floor][ButtonCallUp] = false;
         e.Orders[e.State.Floor][ButtonCallDown] = false;

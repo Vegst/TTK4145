@@ -24,13 +24,16 @@ func NewStateMachine(id string, elevatorEvents ElevatorOrdersEvents, networkEven
 	return sm
 }
 
-func (this *StateMachine) OnOrderUpdated(order Order) {
-	assignedId := OrderAssigner(this.Id, order, this.Elevators)
+func (this *StateMachine) OnOrderReceived(order Order) {
+	assignedId := this.Id
+	if order.Flag {
+		assignedId = OrderAssigner(this.Id, order, this.Elevators)
+	}
 	elev := this.Elevators[assignedId]
-	this.NetworkEvents.TxOrderEvent <- OrderEvent{assignedId, order}
 	elev.Orders[order.Floor][order.Type] = order.Flag
 	this.Elevators[assignedId] = elev
 
+	this.NetworkEvents.TxOrderEvent <- OrderEvent{assignedId, order}
 	this.GuiEvents.Elevators <- misc.CopyElevators(this.Elevators)
 	this.NetworkEvents.Elevators <- misc.CopyElevators(this.Elevators)
 	if assignedId == this.Id {
@@ -39,7 +42,7 @@ func (this *StateMachine) OnOrderUpdated(order Order) {
 	this.ElevatorEvents.GlobalOrders <- misc.GlobalOrders(this.Elevators)
 }
 
-func (this *StateMachine) OnStateUpdated(state ElevatorState) {
+func (this *StateMachine) OnStateReceived(state ElevatorState) {
 	elev := this.Elevators[this.Id]
 	elev.State = state
 	this.Elevators[this.Id] = elev
@@ -60,15 +63,16 @@ func (this *StateMachine) OnElevatorNew(id string) {
 func (this *StateMachine) OnElevatorLost(id string) {
 	lostOrders := misc.CopyOrders(this.Elevators[id].Orders)
 	delete(this.Elevators, id)
-	for f,floorOrders := range lostOrders {
-		for t,order := range floorOrders {
-			if order {
-				order := Order{f,OrderType(t),true}
-				assignedId := OrderAssigner(this.Id, order, this.Elevators)
+	for f,_ := range lostOrders {
+		for t,_ := range []OrderType{OrderCallDown, OrderCallUp} {
+			if lostOrders[f][t] {
+				lostOrder := Order{f,OrderType(t),true}
+				assignedId := OrderAssigner(this.Id, lostOrder, this.Elevators)
 				elev := this.Elevators[assignedId]
-				this.NetworkEvents.TxOrderEvent <- OrderEvent{assignedId, order}
-				elev.Orders[order.Floor][order.Type] = true
+				elev.Orders[f][t] = true
 				this.Elevators[assignedId] = elev
+
+				this.NetworkEvents.TxOrderEvent <- OrderEvent{assignedId, lostOrder}
 				if assignedId == this.Id {
 					this.ElevatorEvents.LocalOrders <- this.Elevators[this.Id].Orders
 				}
