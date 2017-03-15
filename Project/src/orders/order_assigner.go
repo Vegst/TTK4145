@@ -76,13 +76,16 @@ func OrderAssigner(id string, o Order, elevs Elevators) string {
 	var assignedId string = id
 	eDur := math.Inf(1)
 	for k := range elevs {
+		if !elevs[k].State.Active {
+			continue
+		}
 		iDur := float64(CalculateCost(o, elevs[k]))
 		if iDur < eDur {
 			assignedId = k
 			eDur = iDur
 		}
 	}
-	/*
+/*
 	ids := make([]string, 0)
 	for id,_ := range elevs {
 		ids = append(ids, id)

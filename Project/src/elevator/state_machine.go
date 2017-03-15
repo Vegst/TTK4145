@@ -9,9 +9,6 @@ type StateMachine struct {
 	OrdersEvents ElevatorOrdersEvents
 	DoorTimerResetCh chan bool
 	ErrorTimerResetCh chan bool
-
-
-
 	Elevator Elevator
 }
 
@@ -31,6 +28,7 @@ func (sm *StateMachine) OnInit() {
 	sm.Elevator.State.Behaviour = ElevatorBehaviourMoving
 	sm.DriverEvents.MotorDirection <- DirnUp
 	sm.OrdersEvents.State <- sm.Elevator.State
+	sm.ErrorTimerResetCh <- true
 }
 
 func (sm *StateMachine) OnButtonPressed(button Button) {
@@ -54,6 +52,7 @@ func (sm *StateMachine) OnFloorReached(floor int) {
 	sm.Elevator.State.Floor = floor
 	sm.OrdersEvents.State <- sm.Elevator.State
 	sm.DriverEvents.FloorIndicator <- sm.Elevator.State.Floor
+	sm.ErrorTimerResetCh <- true
 
 	switch sm.Elevator.State.Behaviour {
 	case ElevatorBehaviourMoving:
@@ -72,7 +71,6 @@ func (sm *StateMachine) OnFloorReached(floor int) {
 
 				sm.DriverEvents.DoorOpen <- true
 				sm.DoorTimerResetCh <- true
-				sm.DriverEvents.MotorDirection <- DirnStop
 
 				sm.Elevator.State.Behaviour = ElevatorBehaviourDoorOpen
 			} else {
@@ -82,7 +80,6 @@ func (sm *StateMachine) OnFloorReached(floor int) {
 			sm.DriverEvents.MotorDirection <- DirnStop
 			sm.OrdersEvents.State <- sm.Elevator.State
 		}
-	
 	}
 }
 
@@ -119,6 +116,7 @@ func (sm *StateMachine) OnLocalOrdersUpdated(localOrders Orders) {
 				}
 				sm.OrdersEvents.State <- sm.Elevator.State
 				sm.DriverEvents.MotorDirection <- sm.Elevator.State.Direction
+				sm.ErrorTimerResetCh <- true
 			}
 		}
 	}
@@ -144,15 +142,19 @@ func (sm *StateMachine) OnDoorTimerTimeout() {
 			sm.OrdersEvents.State <- sm.Elevator.State
 			sm.DriverEvents.MotorDirection <- sm.Elevator.State.Direction
 			sm.DriverEvents.DoorOpen <- false
+			sm.ErrorTimerResetCh <- true
 		}
 	}
 }
 
 func (sm *StateMachine) OnErrorTimerTimeout() {
-	if sm.Elevator.State.Active {
-		sm.Elevator.State.Active = false
-		sm.DriverEvents.MotorDirection <- DirnStop
-		sm.DriverEvents.Light <- LightEvent{LightTypeStop, 0, true}
-		sm.OrdersEvents.State <- sm.Elevator.State
+	switch sm.Elevator.State.Behaviour {
+	case ElevatorBehaviourMoving:
+		if sm.Elevator.State.Active {
+			sm.Elevator.State.Active = false
+			sm.DriverEvents.MotorDirection <- DirnStop
+			sm.DriverEvents.Light <- LightEvent{LightTypeStop, 0, true}
+			sm.OrdersEvents.State <- sm.Elevator.State
+		}
 	}
 }

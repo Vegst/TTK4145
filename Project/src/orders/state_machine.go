@@ -25,6 +25,10 @@ func NewStateMachine(id string, elevatorEvents ElevatorOrdersEvents, networkEven
 }
 
 func (this *StateMachine) OnOrderReceived(order Order) {
+	if !this.Elevators[this.Id].State.Active && order.Type == OrderCallCommand {
+		return
+	}
+
 	assignedId := this.Id
 	if order.Flag {
 		assignedId = OrderAssigner(this.Id, order, this.Elevators)
@@ -45,6 +49,27 @@ func (this *StateMachine) OnOrderReceived(order Order) {
 func (this *StateMachine) OnStateReceived(state ElevatorState) {
 	elev := this.Elevators[this.Id]
 	elev.State = state
+	this.Elevators[this.Id] = elev
+
+	if !elev.State.Active && elev.State.Floor != -1 {
+		for f,_ := range elev.Orders {
+			for t,_ := range elev.Orders[f] {
+				if elev.Orders[f][t] {
+					elev.Orders[f][t] = false
+					this.NetworkEvents.TxOrderEvent <- OrderEvent{this.Id, Order{f,OrderType(t),false}}
+
+					if t == int(OrderCallDown) || t == int(OrderCallUp) {
+						assignedId := OrderAssigner(this.Id, Order{f,OrderType(t),true}, this.Elevators)
+						assignedElev := this.Elevators[assignedId]
+						assignedElev.Orders[f][t] = true
+						this.Elevators[assignedId] = assignedElev
+						this.NetworkEvents.TxOrderEvent <- OrderEvent{assignedId, Order{f,OrderType(t),true}}
+					}
+					this.ElevatorEvents.GlobalOrders <- misc.GlobalOrders(this.Elevators)
+				}
+			}
+		}
+	}
 	this.Elevators[this.Id] = elev
 	this.GuiEvents.Elevators <- misc.CopyElevators(this.Elevators)
 	this.NetworkEvents.Elevators <- misc.CopyElevators(this.Elevators)
