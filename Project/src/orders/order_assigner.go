@@ -7,32 +7,6 @@ import (
 	"../elevator"
 )
 
-func numOrdersBelowToFloor(e Elevator, floor int) int{
-	numOrders := 0
-	for f := floor; f < e.State.Floor; f++{
-		for o := 0; 0 < NumTypes; o++{
-			if e.Orders[f][o] {
-				numOrders += 1
-			}
-			break
-		}
-	}
-	return numOrders
-}
-
-func numOrdersAboveToFloor(e Elevator, floor int) int{
-	numOrders := 0
-	for f := e.State.Floor; f < floor; f++{
-		for o := 0; 0 < NumTypes; o++{
-			if e.Orders[f][o] {
-				numOrders += 1
-			}
-			break
-		}
-	}
-	return numOrders
-}
-
 func CalculateCost(o Order, e Elevator) time.Duration {
 
 	e.Orders[o.Floor][o.Type] = o.Flag
@@ -54,9 +28,7 @@ func CalculateCost(o Order, e Elevator) time.Duration {
     
     for {
         if elevator.ShouldStop(e) {
-            for b := 0; b < NumTypes; b++{
-            	e.Orders[e.State.Floor][b] = false
-            }
+            e = ClearOrdersAtCurrentFloor(e)
             dur += DoorOpenTime
             e.State.Direction = elevator.GetDirection(e)
             if e.State.Direction == DirnStop{
@@ -73,12 +45,12 @@ func OrderAssigner(id string, o Order, elevs Elevators) string {
 		return id
 	}
 	var assignedId string = id
-	eCost := math.Inf(1)
+	eDur := math.Inf(1)
 	for k := range elevs {
-		iCost := float64(CalculateCost(o, elevs[k]))
-		if iCost < eCost {
+		iDur := float64(CalculateCost(o, elevs[k]))
+		if iDur < eDur {
 			assignedId = k
-			eCost = iCost
+			eDur = iDur
 		}
 	}
 	return assignedId
