@@ -56,7 +56,7 @@ func CalculateCost(order Order, elev Elevator) time.Duration {
     
     for {
         if elevator.ShouldStop(e) {
-            e = ClearOrdersAtCurrentFloor(e)
+            e = elevator.ClearOrdersAtCurrentFloor(e)
             dur += DoorOpenTime
             e.State.Direction = elevator.GetDirection(e)
             if e.State.Direction == DirnStop{
