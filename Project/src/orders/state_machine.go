@@ -22,19 +22,6 @@ func NewStateMachine(id string, elevatorEvents ElevatorOrdersEvents, networkEven
 	sm.NetworkEvents = networkEvents
 	sm.GuiEvents = guiEvents
 	sm.Elevators = make(Elevators)
-
-	elev := sm.Elevators[id]
-	elev.Orders = backup.ReadFromBackup(BackupFile)
-	for f,_ := range elev.Orders {
-		for t,_ := range elev.Orders[f] {
-			if elev.Orders[f][t] {
-				sm.NetworkEvents.TxOrderEvent <- OrderEvent{id, Order{f,OrderType(t),true}}
-			}
-		}
-	}
-	sm.Elevators[id] = elev
-	sm.ElevatorEvents.LocalOrders <- elev.Orders
-	sm.ElevatorEvents.GlobalOrders <- misc.GlobalOrders(sm.Elevators)
 	return sm
 }
 

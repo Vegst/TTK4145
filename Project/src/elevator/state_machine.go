@@ -2,6 +2,7 @@ package elevator
 
 import (
 	. "../def"
+	"../backup"
 )
 
 type StateMachine struct {
@@ -29,6 +30,17 @@ func (this *StateMachine) OnInit() {
 	this.DriverEvents.MotorDirection <- DirnUp
 	this.OrdersEvents.State <- this.Elevator.State
 	this.ErrorTimerResetCh <- true
+
+	
+}
+
+func (this *StateMachine) OnSetTimerTimeout() {
+	orders := backup.ReadFromBackup(BackupFile)
+	for f := 0; f < NumFloors; f++ {
+		if orders[f][OrderCallCommand] {
+			this.OrdersEvents.Order <- Order{f,OrderCallCommand,true}
+		}
+	}
 }
 
 func (this *StateMachine) OnButtonPressed(button Button) {
